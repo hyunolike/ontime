@@ -1,0 +1,32 @@
+package io.github.hyunolike.ontime.app
+
+import io.github.hyunolike.ontime.fake.ScenarioA
+import io.github.hyunolike.ontime.fake.ScenarioPlayer
+import io.github.hyunolike.ontime.fake.ScriptedSpeech
+import io.github.hyunolike.ontime.session.TripPlan
+import io.github.hyunolike.ontime.slack.ParkingOption
+import java.time.Instant
+import kotlin.time.Duration.Companion.minutes
+
+/** 시나리오 A를 재생하는 구성. 주차와 도보 시간은 설명용 가정이다. */
+object Platform {
+    fun create(): PlatformBundle {
+        val player = ScenarioPlayer(ScenarioA.scenario)
+        return PlatformBundle(
+            plan = TripPlan(
+                title = "인천공항 제1터미널",
+                deadline = Instant.parse("2026-12-03T06:55:00Z"), // 15:55 KST
+                parkingOptions = listOf(
+                    ParkingOption(ScenarioA.LONG_TERM.id, ScenarioA.LONG_TERM.name, parking = 6.minutes, walk = 8.minutes),
+                    ParkingOption(ScenarioA.SHORT_TERM.id, ScenarioA.SHORT_TERM.name, parking = 6.minutes, walk = 5.minutes),
+                ),
+            ),
+            departureLabel = "16:40 출발",
+            time = player,
+            navi = player,
+            vehicle = player,
+            speech = ScriptedSpeech(),
+            play = player::run,
+        )
+    }
+}
