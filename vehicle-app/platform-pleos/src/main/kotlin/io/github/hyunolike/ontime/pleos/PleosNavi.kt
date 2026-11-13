@@ -33,9 +33,9 @@ import kotlinx.coroutines.withTimeoutOrNull
 /**
  * NaviHelper로 남은 주행 시간을 받고 목적지를 바꾼다.
  *
- * SDK 파일에서 확인한 것: `DestinationInfo.remainTime`, `TripInfo.eta`, `requestTrip()`.
- * 에뮬레이터에서 아직 확인하지 못한 것: 두 값의 단위, 정보가 저절로 오는지 조회해야 오는지.
- * 그래서 단위는 [REMAIN_TIME_UNIT] 한 곳에 두고, 정보는 [pollEvery]마다 직접 조회한다.
+ * 에뮬레이터에서 확인한 것: `DestinationInfo.remainTime`은 초 단위이고,
+ * `getDestinationInfo()`를 부를 때마다 `onDestinationInfo`로 답이 온다. 그래서 [pollEvery]마다 조회한다.
+ * 아직 확인하지 못한 것: `requestTrip()`의 응답과 `TripInfo.eta`의 단위. 같은 초로 가정했다.
  */
 class PleosNavi(
     context: Context,
@@ -157,7 +157,7 @@ class PleosNavi(
         } ?: Destination("navi:${info.name}", info.name.orEmpty(), info.latitude, info.longitude, info.address.orEmpty())
 
     private companion object {
-        /** 에뮬레이터 로그로 확인한 뒤 고친다. 초라고 가정했다. */
+        /** remainTime 6600이 내비 화면의 1시간 50분과 같았다. */
         val REMAIN_TIME_UNIT = DurationUnit.SECONDS
         val TRIP_TIMEOUT = 5.seconds
 

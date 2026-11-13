@@ -21,6 +21,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -123,6 +124,19 @@ class OnTimeSessionTest {
         runCurrent()
         assertEquals(SlackLevel.DANGER, session.state.value?.level)
         assertTrue(speech.spoken.value.isEmpty())
+    }
+
+    @Test
+    fun `안내를 시작하면 첫 번째 주차장으로 경로를 요청하고 말로 알린다`() = runTest {
+        val player = ScenarioPlayer(ScenarioA.scenario)
+        player.changeDestination(ScenarioA.SHORT_TERM)
+        val speech = ScriptedSpeech()
+        val session = OnTimeSession(plan, player, player, player, speech)
+
+        assertTrue(session.startGuidance())
+
+        assertEquals(ScenarioA.LONG_TERM, player.route.first().destination)
+        assertEquals(listOf("장기주차장으로 안내를 시작합니다"), speech.spoken.value)
     }
 
     @Test

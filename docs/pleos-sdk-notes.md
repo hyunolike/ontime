@@ -5,9 +5,35 @@
 - **문서 확인**: 문서에 적혀 있음. 에뮬레이터에서 직접 돌려 보지는 않음
 - **미확인**: 문서에서 찾지 못함. PoC로 확인해야 함
 - **SDK 확인**: 배포된 SDK 파일(AAR)의 클래스와 메서드를 직접 열어 확인함. 컴파일까지 됨. 값의 단위와 실제 응답은 모름
-- **에뮬레이터 검증**: 직접 실행해 응답을 받음 (아직 없음)
+- **에뮬레이터 검증**: 직접 실행해 응답을 받음. 아래 "에뮬레이터에서 확인한 것" 참고
 
 API Reference 페이지는 스크립트로 그려져 본문을 읽지 못했습니다. 대신 SDK 파일을 받아 직접 확인한 내용을 아래 "SDK 파일에서 확인한 것"에 정리했습니다.
+
+## 에뮬레이터에서 확인한 것 (2026-11-13)
+
+환경: Apple Silicon Mac, Pleos Connect Emulator v2.1.0 (`system-images;android-34;pleos_car_emulator;arm64-v8a`), 기기 프로필 `Pleos_Connect_v2_0`, 화면 2560x1440 px, 160 dpi. 앱은 화면 오른쪽 영역(약 1,700x1,200 px)에 뜬다.
+
+| 항목 | 결과 |
+|---|---|
+| 에뮬레이터 부팅 | Apple Silicon에서 정상 부팅. 콜드 부팅, RAM 4GB, GPU host |
+| `NaviHelper.initialize()` | 성공. 서비스 버전 3.0.4 |
+| `requestRoute()` | 성공. 내비 앱이 앞으로 나와 경로 선택 화면을 띄우고 잠시 뒤 안내를 시작한다 |
+| `onDestinationInfo` | **`remainTime`은 초, `remainDistance`는 미터.** 내비 화면의 1시간 50분, 75km일 때 6600, 75000을 받았다 |
+| 목적지 정보 갱신 | `getDestinationInfo()`를 부를 때마다 응답이 온다. 경로가 없으면 이름이 비고 값이 0이다 |
+| `onNavigationStatus` | 안내 중 `ROUTE_DRIVE` |
+| 기어 | `getCurrentGearSelectionState()`와 `registerGearSelection()` 모두 `GEAR_PARK`를 돌려준다. 지원 중단 표시가 있지만 동작한다 |
+| TTS `ON_DEVICE` | **실패.** `ON_DEVICE_ENGINE_ERROR`. 에뮬레이터에 기기 내 엔진이 없다. 서버 모드와 앱 등록이 필요하다 |
+| 실제 값으로 여유 계산 | 동작. 마감까지 87분, 주행 110분일 때 −40분을 표시했다 |
+
+![실제 내비 값으로 계산한 화면](screenshots/5-pleos-live.png)
+
+알게 된 제약:
+
+- **앱이 뒤로 가면 프로세스가 멈춘다.** `requestRoute()` 직후 내비가 앞으로 나오자 시스템이 앱을 동결했고(`freezing`), 다시 앞으로 올 때까지 콜백이 오지 않았다. 주행 중 계속 계산하려면 화면에 떠 있거나 포그라운드 서비스가 필요하다.
+- **명령줄로 에뮬레이터를 띄우면 DNS를 못 잡는 경우가 있다.** 내비 앱이 `navi not ready`로 남아 요청에 답하지 않는다. `-dns-server 8.8.8.8`을 붙이면 된다.
+- 내비 출발 위치는 성남 판교 부근으로 잡혀 있다. 위치를 옮기는 방법은 아직 확인하지 못했다.
+
+아직 확인하지 못한 것: `requestTrip()`의 응답과 안내 중 경로에 주는 영향, 주행 중 `remainTime`이 줄어드는지, 기어를 D로 바꿨을 때의 화면 전환, STT, TTS 서버 모드, 주행가능거리.
 
 ## SDK 파일에서 확인한 것 (2026-11-13)
 

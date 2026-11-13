@@ -86,6 +86,17 @@ class OnTimeSession(
         }
     }
 
+    /**
+     * 일정의 첫 번째 주차장으로 안내를 시작한다. 내비에 경로가 없을 때 쓴다.
+     * 요청이 받아들여졌는지만 돌려주고, 실제 경로는 [state]로 확인한다.
+     */
+    suspend fun startGuidance(): Boolean {
+        val target = plan.parkingChoices.firstOrNull()?.destination ?: return false
+        val accepted = navi.changeDestination(target)
+        speech.say(if (accepted) "${target.name.withEuro()} 안내를 시작합니다" else "경로를 설정하지 못했습니다")
+        return accepted
+    }
+
     private suspend fun propose(input: SlackInput, route: RouteStatus) {
         val candidates = plan.parkingChoices
             .filter { it.destination.id != route.destination.id && it.destination.id !in proposedIds }

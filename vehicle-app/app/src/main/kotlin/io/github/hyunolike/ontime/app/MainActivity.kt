@@ -15,6 +15,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.hyunolike.ontime.app.ui.DrivingScreen
 import io.github.hyunolike.ontime.app.ui.OnTimeColors
 import io.github.hyunolike.ontime.app.ui.StoppedScreen
+import io.github.hyunolike.ontime.app.ui.WaitingScreen
 
 class MainActivity : ComponentActivity() {
     private val viewModel: OnTimeViewModel by viewModels()
@@ -31,7 +32,12 @@ class MainActivity : ComponentActivity() {
                     .background(OnTimeColors.Background)
                     .safeDrawingPadding(),
             ) {
-                val current = state ?: return@Box
+                val current = state
+                if (current == null) {
+                    // 내비에 등록된 주차장으로 가는 경로가 아직 없다.
+                    WaitingScreen(viewModel.plan, viewModel.departureLabel, viewModel::startGuidance)
+                    return@Box
+                }
                 // 주행 중에는 숫자 하나만, 내역과 버튼은 정차 중에만 보여 준다.
                 if (current.driving) {
                     DrivingScreen(current, viewModel.plan, viewModel.departureLabel)
