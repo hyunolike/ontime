@@ -69,6 +69,7 @@ android {
 
 dependencies {
     implementation(project(":core-session"))
+    implementation(project(":design-system"))
     "fakeImplementation"(project(":platform-fake"))
     "pleosImplementation"(project(":platform-pleos"))
 

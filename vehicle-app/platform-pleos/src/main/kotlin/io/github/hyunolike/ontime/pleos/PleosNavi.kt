@@ -159,7 +159,7 @@ class PleosNavi(
     private companion object {
         /** remainTime 6600이 내비 화면의 1시간 50분과 같았다. */
         val REMAIN_TIME_UNIT = DurationUnit.SECONDS
-        val TRIP_TIMEOUT = 5.seconds
+        val TRIP_TIMEOUT = 15.seconds
 
         /** 약 150m. */
         const val NEAR_DEGREES = 0.0015

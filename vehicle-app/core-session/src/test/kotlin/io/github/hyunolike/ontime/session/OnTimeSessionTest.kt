@@ -140,6 +140,43 @@ class OnTimeSessionTest {
     }
 
     @Test
+    fun `주차장마다 예상 여유를 비교해 보여 준다`() = runTest {
+        val player = ScenarioPlayer(ScenarioA.scenario)
+        val session = OnTimeSession(plan, player, player, player, ScriptedSpeech())
+        assertTrue(session.previewParking().isEmpty()) // 입력이 모이기 전
+        backgroundScope.launch { session.run() }
+        runCurrent()
+
+        val previews = session.previewParking()
+
+        assertEquals(listOf("장기주차장" to 28, "단기주차장" to 40), previews.map { it.destination.name to it.slack.displayMinutes })
+        assertEquals(listOf(true, false), previews.map { it.current })
+    }
+
+    @Test
+    fun `정차 중 직접 고른 주차장으로 목적지를 바꾼다`() = runTest {
+        val player = ScenarioPlayer(ScenarioA.scenario)
+        val speech = ScriptedSpeech()
+        val session = OnTimeSession(plan, player, player, player, speech)
+        backgroundScope.launch { session.run() }
+        runCurrent()
+
+        assertTrue(session.chooseParking(ScenarioA.SHORT_TERM.id))
+        runCurrent()
+
+        assertEquals("단기주차장", session.state.value?.destinationName)
+        assertEquals(listOf("목적지를 단기주차장으로 바꿨어요"), speech.spoken.value)
+        assertEquals(false, session.chooseParking("unknown"))
+    }
+
+    @Test
+    fun `제안에는 지금 여유와 바꾼 뒤 예상 여유가 담긴다`() = runTest {
+        val states = playScenario(ScriptedSpeech(answer = true))
+        val proposed = states.first { it.suggestion?.status == SuggestionStatus.PROPOSED }.suggestion!!
+        assertEquals(12, proposed.expectedMinutes!! - proposed.currentMinutes!!)
+    }
+
+    @Test
     fun `받침에 따라 조사를 고른다`() {
         assertEquals("단기주차장으로", "단기주차장".withEuro())
         assertEquals("제2터미널로", "제2터미널".withEuro())

@@ -45,6 +45,7 @@ object Platform {
             vehicle = vehicle,
             speech = speech,
             play = null,
+            keepAlive = true,
         )
     }
 }

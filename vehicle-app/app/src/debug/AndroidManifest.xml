@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- 디자인 시스템 구성 요소를 한 화면에서 확인하는 갤러리. 디버그 빌드에만 들어간다. -->
+        <activity
+            android:name=".GalleryActivity"
+            android:exported="true"
+            android:label="온타임 디자인" />
+    </application>
+</manifest>

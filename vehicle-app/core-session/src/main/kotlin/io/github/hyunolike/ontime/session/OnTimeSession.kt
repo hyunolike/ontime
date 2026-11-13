@@ -35,12 +35,14 @@ class OnTimeSession(
     private val navi: NaviGateway,
     private val vehicle: VehicleGateway,
     private val speech: SpeechGateway,
-    thresholds: SlackThresholds = SlackThresholds(),
+    private val thresholds: SlackThresholds = SlackThresholds(),
     private val staleAfter: Duration = 2.minutes,
 ) {
     private val tracker = SlackLevelTracker(thresholds)
     private val proposedIds = mutableSetOf<String>()
     private var proposal: Job? = null
+    private var lastInput: SlackInput? = null
+    private var lastRoute: RouteStatus? = null
 
     private val _state = MutableStateFlow<SessionState?>(null)
 
@@ -59,6 +61,8 @@ class OnTimeSession(
                 walk = option.walk,
                 buffer = plan.buffer,
             )
+            lastInput = input
+            lastRoute = route
             val slack = SlackCalculator.calculate(input)
             val change = tracker.update(slack.exact)
             val stale = route.remainingDrive.isStale(now, staleAfter)
@@ -97,6 +101,32 @@ class OnTimeSession(
         return accepted
     }
 
+    /**
+     * 주차장마다 지금 골랐을 때의 예상 여유를 계산한다. 경로가 없으면 빈 목록이다.
+     * 소요 시간을 알 수 없는 주차장은 뺀다.
+     */
+    suspend fun previewParking(): List<ParkingPreview> {
+        val input = lastInput ?: return emptyList()
+        val route = lastRoute ?: return emptyList()
+        return plan.parkingChoices.mapNotNull { choice ->
+            val current = choice.destination.id == route.destination.id
+            val drive = if (current) input.drive else navi.estimateRemainingDrive(choice.destination)
+            drive?.let {
+                val slack = SlackCalculator.calculate(input.copy(drive = it, parking = choice.parking, walk = choice.walk))
+                ParkingPreview(choice.destination, slack, thresholds.levelFor(slack.exact), it, choice.walk, current)
+            }
+        }
+    }
+
+    /** 사용자가 직접 고른 주차장으로 목적지를 바꾼다. 정차 중 화면에서만 부른다. */
+    suspend fun chooseParking(destinationId: String): Boolean {
+        val target = plan.parkingChoices.find { it.destination.id == destinationId }?.destination ?: return false
+        if (lastRoute?.destination?.id == target.id) return true
+        val accepted = navi.changeDestination(target)
+        speech.say(if (accepted) "목적지를 ${target.name.withEuro()} 바꿨어요" else "경로를 바꾸지 못했습니다")
+        return accepted
+    }
+
     private suspend fun propose(input: SlackInput, route: RouteStatus) {
         val candidates = plan.parkingChoices
             .filter { it.destination.id != route.destination.id && it.destination.id !in proposedIds }
@@ -108,22 +138,26 @@ class OnTimeSession(
         proposedIds += target.id
 
         val text = "${target.name.withEuro()} 바꾸면 ${alternative.gain.inWholeMinutes}분을 아낄 수 있습니다"
-        setSuggestion(Suggestion(text, SuggestionStatus.PROPOSED))
+        val before = SlackCalculator.calculate(input).displayMinutes
+        val after = alternative.newSlack.displayMinutes
+        fun suggestion(status: SuggestionStatus, result: String? = null) =
+            Suggestion(text, status, result, currentMinutes = before, expectedMinutes = after)
+        setSuggestion(suggestion(SuggestionStatus.PROPOSED))
 
         if (!speech.askYesNo(text)) {
-            setSuggestion(Suggestion(text, SuggestionStatus.DECLINED))
+            setSuggestion(suggestion(SuggestionStatus.DECLINED))
             return
         }
         if (!navi.changeDestination(target)) {
             val result = "경로를 바꾸지 못했습니다"
-            setSuggestion(Suggestion(text, SuggestionStatus.FAILED, result))
+            setSuggestion(suggestion(SuggestionStatus.FAILED, result))
             speech.say(result)
             return
         }
         // 경로가 실제로 바뀐 뒤의 여유를 말한다.
         val changed = state.first { it?.destinationName == target.name }!!
         val result = "목적지를 ${target.name.withEuro()} 바꿨어요. 여유 ${signedMinutes(changed.slack.displayMinutes)}"
-        setSuggestion(Suggestion(text, SuggestionStatus.ACCEPTED, result))
+        setSuggestion(suggestion(SuggestionStatus.ACCEPTED, result))
         speech.say(result)
     }
 

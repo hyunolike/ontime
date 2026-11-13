@@ -15,4 +15,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "ontime-vehicle-app"
-include(":core-slack", ":core-voice", ":core-session", ":platform-api", ":platform-fake", ":platform-pleos", ":app")
+include(":core-slack", ":core-voice", ":core-session", ":platform-api", ":platform-fake", ":platform-pleos", ":design-system", ":app")

@@ -25,7 +25,24 @@ data class TripPlan(
 
 enum class SuggestionStatus { PROPOSED, ACCEPTED, DECLINED, FAILED }
 
-data class Suggestion(val text: String, val status: SuggestionStatus, val result: String? = null)
+data class Suggestion(
+    val text: String,
+    val status: SuggestionStatus,
+    val result: String? = null,
+    /** 제안할 때의 여유(분)와 바꿨을 때 예상 여유(분). */
+    val currentMinutes: Int? = null,
+    val expectedMinutes: Int? = null,
+)
+
+/** 주차장 하나를 골랐을 때의 예상 여유. 정차 중 비교 화면에 쓴다. */
+data class ParkingPreview(
+    val destination: Destination,
+    val slack: SlackResult,
+    val level: SlackLevel,
+    val drive: Duration,
+    val walk: Duration,
+    val current: Boolean,
+)
 
 data class SessionState(
     val now: Instant,

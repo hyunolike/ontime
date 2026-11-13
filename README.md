@@ -8,13 +8,17 @@
 
 기획서 시나리오 A의 고속도로 장면을 **재생 데이터로** 보여 주는 최소 동작본입니다.
 
-| 정차 화면 | 정체로 여유 감소 | 주차장 변경 후 |
-|---|---|---|
-| ![정차 화면](docs/screenshots/1-stopped.png) | ![주의 상태](docs/screenshots/2-caution.png) | ![변경 후](docs/screenshots/3-changed.png) |
+| 정차 중: 내역과 주차장 비교 | 주행 중: 숫자 하나 |
+|---|---|
+| ![정차 화면](docs/screenshots/1-parked.png) | ![주행 화면](docs/screenshots/2-driving.png) |
+
+Pleos Connect 에뮬레이터에서 실제 내비 값으로 계산한 화면입니다(`pleos` 빌드).
+
+![실제 내비 값으로 계산한 화면](docs/screenshots/3-pleos-live.png)
 
 실제로 동작하는 부분:
 
-- 여유 시간 계산, 상태 판정(여유, 주의, 위험), 대안 주차장 선택 (단위 테스트 32개)
+- 여유 시간 계산, 상태 판정(여유, 주의, 위험), 대안 주차장 선택 (단위 테스트 38개)
 - 주행 중에는 숫자 하나만 보여 주고, 정차 중에는 계산 내역을 보여 주는 화면 전환
 - 여유가 줄면 주차장 변경을 제안하고, 수락하면 목적지를 바꿔 여유를 다시 계산하는 흐름
 
@@ -23,13 +27,13 @@
 - 현재 시각, 남은 주행 시간, 주행 여부는 시나리오 파일을 20배속으로 재생한 값입니다. 화면에 "시연 재생"으로 표시합니다.
 - 음성은 아직 연결하지 않았습니다. "그렇게 해 줘"라는 답은 4초 뒤 수락한 것으로 처리합니다.
 - 주차 6분, 도보 8분과 5분, 버퍼 3분은 설명용 가정입니다.
-- 제출 APK(`fake` 빌드)는 Pleos Connect SDK를 호출하지 않습니다. SDK 구현은 `platform-pleos` 모듈에 있습니다. `pleos` 빌드를 Pleos Connect 에뮬레이터에서 실행해 경로 요청, 남은 주행 시간 수신, 기어 조회까지 확인했고, 음성과 주행 중 동작은 아직 확인하지 못했습니다.
+- 제출 APK(`fake` 빌드)는 Pleos Connect SDK를 호출하지 않습니다. SDK 구현은 `platform-pleos` 모듈에 있습니다. `pleos` 빌드를 Pleos Connect 에뮬레이터에서 실행해 경로 요청, 남은 주행 시간 수신, 다른 주차장까지의 소요 시간 조회, 기어 조회를 확인했습니다. 음성은 에뮬레이터의 기기 내 엔진 오류로 아직 동작하지 않습니다.
 
 ## 저장소 구성
 
 | 경로 | 내용 |
 |---|---|
-| `vehicle-app/` | 차량 앱 (Kotlin, Jetpack Compose). `core-slack` 계산, `core-voice` 음성 답 해석, `core-session` 흐름, `platform-api` 차량 입력 인터페이스, `platform-fake` 시나리오 재생, `platform-pleos` Pleos SDK 구현, `app` 화면 |
+| `vehicle-app/` | 차량 앱 (Kotlin, Jetpack Compose). `core-slack` 계산, `core-voice` 음성 답 해석, `core-session` 흐름, `platform-api` 차량 입력 인터페이스, `platform-fake` 시나리오 재생, `platform-pleos` Pleos SDK 구현, `design-system` 디자인 시스템, `app` 화면 |
 | `server/` | 운항 정보와 주차장 현황을 모아 차량 앱에 전달하는 서버 (예정) |
 | `mobile-web/` | 하차 후 스마트폰에서 이어 보는 화면 (예정) |
 | `apk/` | 제출용 release APK |
@@ -90,6 +94,7 @@ release 빌드는 `vehicle-app/keystore.properties`가 있을 때만 서명됩�
 ## 문서
 
 - [0단계 구현 계획](docs/superpowers/plans/2026-11-13-stage0-minimal-build.md)
+- [디자인 시스템](docs/design-system.md)
 - [설계 문서](docs/superpowers/specs/2026-11-13-ontime-design.md)
 - [Pleos SDK 확인 기록](docs/pleos-sdk-notes.md)
 - [공모전 규정 요약](docs/contest-rules.md)

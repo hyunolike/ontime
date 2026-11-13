@@ -17,4 +17,6 @@ class PlatformBundle(
     val speech: SpeechGateway,
     /** 시연 재생을 시작한다. 재생이 없는 빌드에서는 null. */
     val play: (suspend () -> Unit)?,
+    /** 화면이 뒤로 가도 계산을 이어 가야 하면 true. 실제 차량 입력을 받는 빌드에서 켠다. */
+    val keepAlive: Boolean = false,
 )
