@@ -90,7 +90,7 @@ class ScenarioTest {
     @Test
     fun `모르는 목적지는 추정도 변경도 하지 않는다`() = runTest {
         val player = ScenarioPlayer(scenario)
-        val unknown = io.github.hyunolike.ontime.platform.Destination("gmp", "김포공항")
+        val unknown = io.github.hyunolike.ontime.platform.Destination("gmp", "김포공항", 37.5587, 126.7945)
         assertNull(player.estimateRemainingDrive(unknown))
         assertFalse(player.changeDestination(unknown))
         assertEquals(ScenarioA.LONG_TERM, player.route.first().destination)

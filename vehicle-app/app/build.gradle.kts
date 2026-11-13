@@ -43,11 +43,15 @@ android {
     }
 
     // fake: 시나리오를 재생한다. Pleos 이미지가 없는 에뮬레이터에서도 돈다.
-    // pleos: Pleos Connect SDK 구현. 1단계에서 추가한다.
+    // pleos: Pleos Connect SDK를 호출한다. Pleos Connect 에뮬레이터나 실차에서만 돈다.
     flavorDimensions += "platform"
     productFlavors {
         create("fake") {
             dimension = "platform"
+        }
+        create("pleos") {
+            dimension = "platform"
+            applicationIdSuffix = ".pleos"
         }
     }
 
@@ -66,6 +70,7 @@ android {
 dependencies {
     implementation(project(":core-session"))
     "fakeImplementation"(project(":platform-fake"))
+    "pleosImplementation"(project(":platform-pleos"))
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)

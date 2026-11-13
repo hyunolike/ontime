@@ -14,7 +14,7 @@
 
 실제로 동작하는 부분:
 
-- 여유 시간 계산, 상태 판정(여유, 주의, 위험), 대안 주차장 선택 (단위 테스트 27개)
+- 여유 시간 계산, 상태 판정(여유, 주의, 위험), 대안 주차장 선택 (단위 테스트 31개)
 - 주행 중에는 숫자 하나만 보여 주고, 정차 중에는 계산 내역을 보여 주는 화면 전환
 - 여유가 줄면 주차장 변경을 제안하고, 수락하면 목적지를 바꿔 여유를 다시 계산하는 흐름
 
@@ -23,13 +23,13 @@
 - 현재 시각, 남은 주행 시간, 주행 여부는 시나리오 파일을 20배속으로 재생한 값입니다. 화면에 "시연 재생"으로 표시합니다.
 - 음성은 아직 연결하지 않았습니다. "그렇게 해 줘"라는 답은 4초 뒤 수락한 것으로 처리합니다.
 - 주차 6분, 도보 8분과 5분, 버퍼 3분은 설명용 가정입니다.
-- Pleos Connect SDK는 아직 호출하지 않습니다. 차량 입력은 모두 인터페이스(`platform-api`) 뒤에 있고, 다음 단계에서 NaviHelper, Vehicle, SpeechToText, TextToSpeech, FusedLocation 구현으로 바꿉니다.
+- 제출 APK(`fake` 빌드)는 Pleos Connect SDK를 호출하지 않습니다. SDK 구현은 `platform-pleos` 모듈에 있고 `pleos` 빌드로 컴파일되지만, Pleos Connect 에뮬레이터에서 실행해 확인하지는 못했습니다.
 
 ## 저장소 구성
 
 | 경로 | 내용 |
 |---|---|
-| `vehicle-app/` | 차량 앱 (Kotlin, Jetpack Compose). `core-slack` 계산, `core-session` 흐름, `platform-api` 차량 입력 인터페이스, `platform-fake` 시나리오 재생, `app` 화면 |
+| `vehicle-app/` | 차량 앱 (Kotlin, Jetpack Compose). `core-slack` 계산, `core-voice` 음성 답 해석, `core-session` 흐름, `platform-api` 차량 입력 인터페이스, `platform-fake` 시나리오 재생, `platform-pleos` Pleos SDK 구현, `app` 화면 |
 | `server/` | 운항 정보와 주차장 현황을 모아 차량 앱에 전달하는 서버 (예정) |
 | `mobile-web/` | 하차 후 스마트폰에서 이어 보는 화면 (예정) |
 | `apk/` | 제출용 release APK |
@@ -51,7 +51,8 @@ adb shell am start -n io.github.hyunolike.ontime/io.github.hyunolike.ontime.app.
 ```bash
 cd vehicle-app
 ./gradlew test                    # 단위 테스트
-./gradlew :app:assembleFakeDebug  # 디버그 APK
+./gradlew :app:assembleFakeDebug   # 시나리오 재생 빌드
+./gradlew :app:assemblePleosDebug  # Pleos SDK 연동 빌드 (Pleos Connect 에뮬레이터 필요)
 ```
 
 release 빌드는 `vehicle-app/keystore.properties`가 있을 때만 서명됩니다. 키스토어는 저장소에 넣지 않았습니다.
@@ -73,9 +74,9 @@ release 빌드는 `vehicle-app/keystore.properties`가 있을 때만 서명됩�
 
 [`apk/장현호_온타임_release.apk`](apk/장현호_온타임_release.apk)
 
-## 사용할 Pleos Connect SDK
+## 사용하는 Pleos Connect SDK
 
-다음 단계에서 연결합니다.
+`pleos` 빌드에서 NaviHelper, Vehicle, SpeechToText, TextToSpeech를 호출합니다. FusedLocation은 아직 연결하지 않았습니다.
 
 | SDK | 버전 | 용도 |
 |---|---|---|

@@ -1,5 +1,6 @@
 package io.github.hyunolike.ontime.session
 
+import io.github.hyunolike.ontime.platform.Destination
 import io.github.hyunolike.ontime.slack.ParkingOption
 import io.github.hyunolike.ontime.slack.SlackLevel
 import io.github.hyunolike.ontime.slack.SlackResult
@@ -8,14 +9,18 @@ import java.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
+/** 갈 수 있는 주차장 하나. 내비 목적지와 거기서 드는 주차, 도보 시간을 묶는다. */
+data class ParkingChoice(val destination: Destination, val parking: Duration, val walk: Duration) {
+    val option: ParkingOption get() = ParkingOption(destination.id, destination.name, parking, walk)
+}
+
 /** 등록된 일정 하나. */
 data class TripPlan(
     val title: String,
     /** 놓치면 안 되는 시각. 출발 시각이 아니라 수속 마감이다. */
     val deadline: Instant,
     val buffer: Duration = 3.minutes,
-    /** 갈 수 있는 주차장. id는 내비 목적지 id와 같다. */
-    val parkingOptions: List<ParkingOption>,
+    val parkingChoices: List<ParkingChoice>,
 )
 
 enum class SuggestionStatus { PROPOSED, ACCEPTED, DECLINED, FAILED }

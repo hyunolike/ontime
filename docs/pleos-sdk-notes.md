@@ -4,9 +4,35 @@
 
 - **문서 확인**: 문서에 적혀 있음. 에뮬레이터에서 직접 돌려 보지는 않음
 - **미확인**: 문서에서 찾지 못함. PoC로 확인해야 함
+- **SDK 확인**: 배포된 SDK 파일(AAR)의 클래스와 메서드를 직접 열어 확인함. 컴파일까지 됨. 값의 단위와 실제 응답은 모름
 - **에뮬레이터 검증**: 직접 실행해 응답을 받음 (아직 없음)
 
-API Reference 페이지는 스크립트로 그려져 본문을 읽지 못했습니다. 정확한 시그니처는 Android Studio에서 SDK를 받은 뒤 소스와 자동 완성으로 다시 확인합니다.
+API Reference 페이지는 스크립트로 그려져 본문을 읽지 못했습니다. 대신 SDK 파일을 받아 직접 확인한 내용을 아래 "SDK 파일에서 확인한 것"에 정리했습니다.
+
+## SDK 파일에서 확인한 것 (2026-11-13)
+
+문서에서 찾지 못했던 세 가지가 모두 SDK에 있습니다.
+
+| 필요한 값 | API | 남은 확인 |
+|---|---|---|
+| 남은 주행 시간 | `NaviHelper.getDestinationInfo()` 호출 후 `onDestinationInfo(DestinationInfo)`의 `remainTime: Int`, `remainDistance: Int` | 단위(초인지 분인지), 주행 중 저절로 오는지 |
+| 다른 목적지까지의 소요 시간 | `NaviHelper.requestTrip(TripRequest(latitude, longitude, poiId, poiName, poiSubId))` 호출 후 `onTripInfo(TripInfo)`의 `eta: Int`, `distance: Int`, `estimatedSocAtDest: Int` | 단위, 안내 중인 경로에 영향을 주는지 |
+| 기어 | `vehicle.getGear().getCurrentGearSelectionState()`, `registerGearSelection(GearSelectionListener)`. 값은 `VehicleGear.GEAR_PARK`, `GEAR_DRIVE` 등. 권한 `pleos.car.permission.CAR_DRIVE` | **지원 중단(deprecated) 표시가 붙어 있고 Android 표준 `GEAR_SELECTION` 속성을 쓰라고 안내한다.** 에뮬레이터에서 동작하는지 보고, 안 되면 표준 Car API로 바꾼다 |
+| 주행가능거리 | `vehicle.getOdometer().getRangeRemainingDistance()`, `registerRangeRemainingListener()` (`Float`) | 단위 |
+| 배터리 잔량 | `vehicle.getEvBattery().getEvBatteryLevel()` (`Float`) | 단위 |
+
+그 밖에 확인한 것:
+
+- `NavigationStatus`: `INACTIVE`, `INITIALIZING`, `FREE_DRIVE`, `ROUTE_DRIVE`. `onNavigationStatus()`로 온다.
+- `NaviErrorCode`: `CAUSE_LOW_BATTERY`, `CAUSE_SEARCH_ROUTE_OVER_DISTANCE`, `CAUSE_SEARCH_ROUTE`, `CAUSE_SEARCH_ROUTE_TOO_SHORT_DISTANCE`, `CAUSE_SEARCH_TRIP`.
+- `NaviHelper.initialize(onSuccess, onError)` 형태의 초기화가 있다.
+- `TripInfo.estimatedSocAtDest`로 도착 시 예상 배터리 잔량을 받을 수 있다. 충전 판단에 주행가능거리 비교 대신 쓸 수 있다.
+- `DrivingInfo`의 목적지와 경유지별 `duration`, `distance`, `targetSoc`, `chargingPlan`.
+- TTS와 STT 모두 `Mode.ON_DEVICE`, `SERVER`, `HYBRID`와 `setLocale(Locale)`이 있다. STT `ResultListener.onUpdated(String, Boolean)`.
+- 각 SDK는 데이터 클래스를 별도 패키지로 끌어온다 (`navi-data:3.0.4`, `vehicle-data:1.1.11`). Gradle이 자동으로 받는다.
+- 에뮬레이터 이미지는 `system-images;android-34;pleos_car_emulator;arm64-v8a`이고 약 4.7GB다. 42dot의 SDK 라이선스 동의가 필요하다.
+
+이 내용으로 `vehicle-app/platform-pleos` 모듈을 작성했고 `pleosDebug` 빌드가 컴파일됩니다. **실행해서 응답을 받은 것은 아직 하나도 없습니다.** SDK와 주고받는 내용은 모두 `OnTimePleos` 태그로 로그에 남기므로 `adb logcat -s OnTimePleos`로 확인합니다.
 
 ## 프로젝트 설정 (문서 확인)
 
@@ -71,7 +97,7 @@ naviHelper.cancelRoute()
 
 미확인:
 
-- **남은 주행 시간이나 도착 예정 시각을 주는 콜백과 필드.** `onTripInfo`, `onRouteStateInfo`, `onDrivingInfo`가 후보지만 문서에 필드 설명이 없습니다. 여유 시간 계산의 중심 입력이므로 가장 먼저 확인합니다.
+- 남은 주행 시간 필드는 SDK 파일에서 찾았습니다(위 표). 단위와 갱신 방식은 에뮬레이터에서 확인합니다.
 - 이벤트는 내비 앱 구현과 상태에 따라 달라질 수 있다고 적혀 있습니다.
 
 ## Vehicle 2.3.2
@@ -95,8 +121,7 @@ vehicle.release()
 
 미확인:
 
-- **기어 상태 getter.** 도메인 목록에 Gear가 없습니다. Virtual Console에는 Gear Selection이 있어 값은 존재하지만 어느 도메인의 어떤 메서드인지 찾지 못했습니다 (DrivingMode가 후보).
-- EvBattery와 Fuel의 주행가능거리, SOC getter 이름.
+- 기어, 주행가능거리, 배터리 잔량 getter는 SDK 파일에서 찾았습니다(위 표). 기어 API는 지원 중단 표시가 있어 동작 여부를 확인해야 합니다.
 - 도어 위치 값 `pos`의 의미.
 
 ## SpeechToText 3.3.1

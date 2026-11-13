@@ -1,6 +1,7 @@
 package io.github.hyunolike.ontime.app
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.hyunolike.ontime.session.OnTimeSession
 import io.github.hyunolike.ontime.session.SessionState
@@ -8,8 +9,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class OnTimeViewModel : ViewModel() {
-    private val platform = Platform.create()
+class OnTimeViewModel(application: Application) : AndroidViewModel(application) {
+    private val platform = Platform.create(application)
     private val session = OnTimeSession(
         platform.plan,
         platform.time,

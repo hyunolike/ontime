@@ -3,9 +3,18 @@ package io.github.hyunolike.ontime.platform
 import io.github.hyunolike.ontime.slack.Reading
 import java.time.Instant
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
-data class Destination(val id: String, val name: String)
+data class Destination(
+    val id: String,
+    val name: String,
+    val latitude: Double,
+    val longitude: Double,
+    val address: String = "",
+)
 
 /** 지금 안내 중인 목적지와 거기까지 남은 주행 시간. 둘을 한 번에 내보내 서로 어긋나지 않게 한다. */
 data class RouteStatus(val destination: Destination, val remainingDrive: Reading<Duration>)
@@ -33,4 +42,14 @@ interface SpeechGateway {
 
     /** [prompt]를 말하고 답을 한 번 듣는다. 애매하거나 답이 없으면 false. */
     suspend fun askYesNo(prompt: String): Boolean
+}
+
+/** 기기 시계를 [period]마다 내보낸다. */
+class SystemTimeSource(private val period: Duration = 1.seconds) : TimeSource {
+    override val now: Flow<Instant> = flow {
+        while (true) {
+            emit(Instant.now())
+            delay(period)
+        }
+    }
 }

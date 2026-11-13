@@ -50,7 +50,7 @@ class OnTimeSession(
     /** 취소될 때까지 입력을 받아 [state]를 갱신한다. */
     suspend fun run(): Unit = coroutineScope {
         combine(time.now, navi.route, vehicle.driving, ::Triple).collect { (now, route, driving) ->
-            val option = plan.parkingOptions.find { it.id == route.destination.id } ?: return@collect
+            val option = plan.parkingChoices.find { it.destination.id == route.destination.id }?.option ?: return@collect
             val input = SlackInput(
                 deadline = plan.deadline,
                 now = now,
@@ -87,13 +87,13 @@ class OnTimeSession(
     }
 
     private suspend fun propose(input: SlackInput, route: RouteStatus) {
-        val candidates = plan.parkingOptions
-            .filter { it.id != route.destination.id && it.id !in proposedIds }
-            .mapNotNull { option ->
-                navi.estimateRemainingDrive(Destination(option.id, option.name))?.let { Candidate(option, it) }
+        val candidates = plan.parkingChoices
+            .filter { it.destination.id != route.destination.id && it.destination.id !in proposedIds }
+            .mapNotNull { choice ->
+                navi.estimateRemainingDrive(choice.destination)?.let { Candidate(choice.option, it) }
             }
         val alternative = AlternativePicker.pick(input, candidates) ?: return
-        val target = Destination(alternative.option.id, alternative.option.name)
+        val target = plan.parkingChoices.first { it.destination.id == alternative.option.id }.destination
         proposedIds += target.id
 
         val text = "${target.name.withEuro()} 바꾸면 ${alternative.gain.inWholeMinutes}분을 아낄 수 있습니다"

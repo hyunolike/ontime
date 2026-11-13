@@ -46,8 +46,9 @@ data class Scenario(
  * 단기주차장으로 바꾸면 +21분이 나오도록 맞춘 설명용 수치다. 실측값이 아니다.
  */
 object ScenarioA {
-    val LONG_TERM = Destination("icn-t1-long", "장기주차장")
-    val SHORT_TERM = Destination("icn-t1-short", "단기주차장")
+    // 좌표는 지도에서 읽은 대략값이다. 실제 내비 목적지로 쓰기 전에 주차장 입구 좌표로 확인한다.
+    val LONG_TERM = Destination("icn-t1-long", "장기주차장", 37.4452, 126.4490, "인천 중구 공항로 272")
+    val SHORT_TERM = Destination("icn-t1-short", "단기주차장", 37.4478, 126.4525, "인천 중구 공항로 272")
 
     val scenario = Scenario(
         start = Instant.parse("2026-12-03T05:10:00Z"), // 14:10 KST 출발

@@ -8,7 +8,6 @@ import io.github.hyunolike.ontime.platform.NaviGateway
 import io.github.hyunolike.ontime.platform.RouteStatus
 import io.github.hyunolike.ontime.platform.TimeSource
 import io.github.hyunolike.ontime.platform.VehicleGateway
-import io.github.hyunolike.ontime.slack.ParkingOption
 import io.github.hyunolike.ontime.slack.Reading
 import io.github.hyunolike.ontime.slack.SlackLevel
 import io.github.hyunolike.ontime.slack.Source
@@ -31,10 +30,10 @@ import kotlinx.coroutines.test.runTest
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class OnTimeSessionTest {
-    private val long = ParkingOption(ScenarioA.LONG_TERM.id, "장기주차장", parking = 6.minutes, walk = 8.minutes)
-    private val short = ParkingOption(ScenarioA.SHORT_TERM.id, "단기주차장", parking = 6.minutes, walk = 5.minutes)
+    private val long = ParkingChoice(ScenarioA.LONG_TERM, parking = 6.minutes, walk = 8.minutes)
+    private val short = ParkingChoice(ScenarioA.SHORT_TERM, parking = 6.minutes, walk = 5.minutes)
     private val deadline = Instant.parse("2026-12-03T06:55:00Z")
-    private val plan = TripPlan("16:40 출발", deadline, parkingOptions = listOf(long, short))
+    private val plan = TripPlan("16:40 출발", deadline, parkingChoices = listOf(long, short))
 
     /** 시나리오 A를 끝까지 돌리고 지나간 상태를 모두 돌려준다. */
     private fun TestScope.playScenario(speech: ScriptedSpeech, plan: TripPlan = this@OnTimeSessionTest.plan): List<SessionState> {
@@ -87,7 +86,7 @@ class OnTimeSessionTest {
     @Test
     fun `바꿀 주차장이 없으면 제안하지 않는다`() = runTest {
         val speech = ScriptedSpeech()
-        val states = playScenario(speech, plan.copy(parkingOptions = listOf(long)))
+        val states = playScenario(speech, plan.copy(parkingChoices = listOf(long)))
 
         assertTrue(speech.spoken.value.isEmpty())
         assertNull(states.last().suggestion)
