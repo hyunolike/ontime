@@ -8,9 +8,13 @@
 
 기획서 시나리오 A의 고속도로 장면을 **재생 데이터로** 보여 주는 최소 동작본입니다.
 
-| 정차 중: 내역과 주차장 비교 | 주행 중: 숫자 하나 |
+| 주행 중: 정체로 여유가 줄어 제안 | 수락 후 목적지 변경 |
 |---|---|
-| ![정차 화면](docs/screenshots/1-parked.png) | ![주행 화면](docs/screenshots/2-driving.png) |
+| ![제안 화면](docs/screenshots/5-proposal.png) | ![주행 화면](docs/screenshots/2-driving.png) |
+
+정차 중에는 계산 내역과 주차장 비교를 보여 줍니다.
+
+![정차 화면](docs/screenshots/1-parked.png)
 
 Pleos Connect 에뮬레이터에서 실제 내비 값으로 계산한 화면입니다(`pleos` 빌드).
 

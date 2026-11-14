@@ -59,7 +59,9 @@ object ScenarioA {
                 listOf(
                     Keyframe(0.minutes, 60.minutes),
                     Keyframe(40.minutes, 20.minutes),
-                    Keyframe(41.minutes, 38.minutes), // 사고 정체로 도착 예정이 18분 밀린다
+                    // 사고 정체로 도착 예정이 한 번에 19분 밀린다. 내비의 재탐색처럼 값이 뛰어야
+                    // 제안이 나오는 순간의 여유와 화면의 숫자가 같다.
+                    Keyframe(40.minutes + 5.seconds, 38.minutes + 55.seconds),
                     Keyframe(79.minutes, 0.minutes),
                 ),
             ),
@@ -68,7 +70,7 @@ object ScenarioA {
                 listOf(
                     Keyframe(0.minutes, 51.minutes),
                     Keyframe(40.minutes, 11.minutes),
-                    Keyframe(41.minutes, 29.minutes),
+                    Keyframe(40.minutes + 5.seconds, 29.minutes + 55.seconds),
                     Keyframe(70.minutes, 0.minutes),
                 ),
             ),

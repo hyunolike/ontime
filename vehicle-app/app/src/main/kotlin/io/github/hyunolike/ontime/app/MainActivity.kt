@@ -27,7 +27,9 @@ class MainActivity : ComponentActivity() {
             val choosing by runtime.choosing.collectAsStateWithLifecycle()
             val current = state
             Box(Modifier.fillMaxSize().safeDrawingPadding()) {
-                OnTimeTheme(driving = current?.driving == true) {
+                // 야간 색으로 고정한다. 주행 중 눈부심이 적고 콘셉트 시안과 같은 분위기다.
+                // 주간 색은 디자인 시스템에 준비돼 있고 갤러리에서 확인할 수 있다.
+                OnTimeTheme(darkTheme = true, driving = current?.driving == true) {
                     when {
                         // 내비에 등록된 주차장으로 가는 경로가 아직 없다.
                         current == null -> WaitingScreen(runtime.plan, runtime.departureLabel, runtime::startGuidance)

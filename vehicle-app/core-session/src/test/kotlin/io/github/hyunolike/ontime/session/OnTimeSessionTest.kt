@@ -173,7 +173,9 @@ class OnTimeSessionTest {
     fun `제안에는 지금 여유와 바꾼 뒤 예상 여유가 담긴다`() = runTest {
         val states = playScenario(ScriptedSpeech(answer = true))
         val proposed = states.first { it.suggestion?.status == SuggestionStatus.PROPOSED }.suggestion!!
-        assertEquals(12, proposed.expectedMinutes!! - proposed.currentMinutes!!)
+        // 제안에 적힌 숫자는 그 순간 화면의 숫자와 같아야 한다.
+        assertEquals(9, proposed.currentMinutes)
+        assertEquals(21, proposed.expectedMinutes)
     }
 
     @Test
