@@ -12,12 +12,15 @@ import kotlinx.coroutines.flow.update
 class ScriptedSpeech(
     private val answer: Boolean = true,
     private val answerDelay: Duration = 4.seconds,
+    /** 한 문장을 말하는 데 걸리는 시간. 말하는 동안의 화면을 보여 주려고 둔다. */
+    private val sayDelay: Duration = Duration.ZERO,
 ) : SpeechGateway {
     private val _spoken = MutableStateFlow<List<String>>(emptyList())
     val spoken: StateFlow<List<String>> = _spoken
 
     override suspend fun say(text: String) {
         _spoken.update { it + text }
+        delay(sayDelay)
     }
 
     override suspend fun askYesNo(prompt: String): Boolean {

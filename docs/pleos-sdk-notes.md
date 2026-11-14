@@ -27,8 +27,6 @@ API Reference 페이지는 스크립트로 그려져 본문을 읽지 못했습�
 | `requestTrip()` | 성공. `onTripInfo`의 `eta`는 초, `distance`는 미터, `estimatedSocAtDest`는 퍼센트. 단기주차장에 대해 eta=3742, distance=74976, socAtDest=87을 받았다. 응답까지 4~11초 걸렸고 안내 중인 경로는 바뀌지 않았다 |
 | 포그라운드 서비스 | 동작. `specialUse` 유형으로 시작이 허용됐고, 내비가 앞에 있는 동안에도 콜백을 계속 받았다 |
 
-![실제 내비 값으로 계산한 화면](screenshots/3-pleos-live.png)
-
 알게 된 제약:
 
 - **앱이 뒤로 가면 프로세스가 멈춘다.** `requestRoute()` 직후 내비가 앞으로 나오자 시스템이 앱을 동결했고(`freezing`), 다시 앞으로 올 때까지 콜백이 오지 않았다. 포그라운드 서비스(`KeepAliveService`)를 넣어 해결했다.
@@ -39,7 +37,7 @@ API Reference 페이지는 스크립트로 그려져 본문을 읽지 못했습�
 
 ### 내비와 나란히 띄우기 (2026-11-14)
 
-![내비와 나란히 띄운 화면](screenshots/6-split-pleos-live.png)
+![내비와 나란히 띄운 화면](screenshots/8-sdk-check.png)
 
 - 앱이 하나일 때는 앱 영역 전체(2560x1440 화면에서 [853,90]~[2535,1300])를 쓴다. 이때 `requestRoute()`를 부르면 내비가 같은 자리에 앞으로 나와 온타임을 가린다.
 - 앱 영역 오른쪽 끝의 "⋮" 손잡이를 끌면 1:1로 나뉜다. 한 칸은 폭 841, 높이 1210으로 세로형이 된다. 가이드의 "Connect-S는 앱 2개 실행 시 1:1"과 같다.

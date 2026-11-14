@@ -31,6 +31,15 @@ enum class OnTimeIcon(@DrawableRes val resource: Int) {
     Info(R.drawable.ic_info),
     ArrowForward(R.drawable.ic_arrow_forward),
     Charger(R.drawable.ic_ev_station),
+
+    // 도슨트용 아이콘은 이 앱을 위해 따로 그린 것이다.
+    SideLeft(R.drawable.ic_side_left),
+    SideRight(R.drawable.ic_side_right),
+    Story(R.drawable.ic_story),
+    Quiet(R.drawable.ic_quiet),
+    Stamp(R.drawable.ic_stamp),
+    AddStop(R.drawable.ic_add_stop),
+    Route(R.drawable.ic_route),
 }
 
 /** 뜻을 전하는 아이콘에는 [description]을 넣고, 옆 글자를 꾸미기만 하면 null로 둔다. */

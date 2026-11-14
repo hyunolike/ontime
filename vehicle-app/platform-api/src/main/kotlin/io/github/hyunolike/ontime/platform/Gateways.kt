@@ -31,6 +31,9 @@ interface NaviGateway {
 
     /** 요청이 받아들여지면 true. 실제 변경은 [route]로 확인한다. */
     suspend fun changeDestination(to: Destination): Boolean
+
+    /** 목적지는 그대로 두고 [to]를 경유지로 넣는다. 지원하지 않으면 false. */
+    suspend fun addWaypoint(to: Destination): Boolean = false
 }
 
 interface VehicleGateway {

@@ -1,4 +1,4 @@
-# 온타임 디자인 시스템
+# 길벗 디자인 시스템
 
 코드는 `vehicle-app/design-system` 모듈에 있습니다. 화면(`app`)은 색, 글자, 간격을 직접 쓰지 않고 이 모듈의 토큰과 구성 요소만 씁니다.
 
@@ -110,4 +110,5 @@ adb shell am start -n io.github.hyunolike.ontime/io.github.hyunolike.ontime.app.
 |---|---|---|
 | Asta Sans | Google Fonts, 42dot | SIL Open Font License 1.1 (`vehicle-app/design-system/ASTA_SANS_OFL.txt`) |
 | 아이콘 16종 | Google Material Symbols Rounded | Apache License 2.0 |
+| 도슨트 아이콘 7종 (좌우 창밖, 이야기, 쉼, 도장, 경유지, 길) | Codex로 만든 벡터 | 자체 제작 |
 | 앱 아이콘 | Codex로 만든 벡터 | 자체 제작 |

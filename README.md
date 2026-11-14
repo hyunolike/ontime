@@ -1,124 +1,144 @@
-# 온타임 (OnTime)
+# 길벗: 드라이브 도슨트
 
-늦으면 안 되는 시각에서 거꾸로 계산해, 주행 중에는 "여유 +9분"이라는 숫자 하나로 제시간 도착 여부를 알려 주는 차량용 정시 도착 도우미입니다. 늦어질 것 같으면 더 가까운 주차장이나 충전 경유지를 말로 제안하고, 운전자가 "그렇게 해 줘"라고 답하면 내비 경로를 바꿉니다.
+차가 여행 가이드가 됩니다. 길벗은 곧 지나갈 곳의 이야기를 **몇 분 뒤 어느 쪽 창밖인지**와 함께 미리 들려주고, 회전이 가까우면 말을 멈추는 Pleos Connect 차량용 앱입니다. "들를래"라고 답하면 그곳을 경유지로 넣고, 차를 세워 들르면 방문 도장을 찍습니다.
 
 현대자동차그룹 차량용 앱 개발 공모전(Code your App into Pleos App Market) 출품작입니다.
 
-[![온타임 소개 영상](brag-output/brag.gif)](brag-output/brag.mp4)
+[![길벗 소개 영상](brag-output/brag.gif)](brag-output/brag.mp4)
 
-22초 소개 영상입니다. 이미지를 누르면 소리가 있는 MP4가 열립니다. 앞부분의 앱 화면은 시연 재생 시나리오이고, 뒷부분은 Pleos Connect 에뮬레이터에서 실제 내비와 나란히 띄워 찍은 화면입니다.
+26초 소개 영상입니다. 이미지를 누르면 소리가 있는 MP4가 열립니다. 앱을 Pleos Connect 에뮬레이터에서 녹화한 화면이고, 거리와 해설은 예시 데이터입니다.
 
-## 현재 상태 (0단계)
+## 왜 차에서 하는가
 
-기획서 시나리오 A의 고속도로 장면을 **재생 데이터로** 보여 주는 최소 동작본입니다.
+패키지 버스에는 이동 시간을 채워 주는 가이드가 있지만 자차와 렌터카 여행에는 없습니다. 스마트폰 오디오 가이드는 지금 위치만 압니다. 차는 그보다 많이 압니다.
 
-| 주행 중: 정체로 여유가 줄어 제안 | 수락 후 목적지 변경 |
+| 차가 아는 것 | 쓰임 | SDK |
+|---|---|---|
+| 앞으로 갈 길 | "5분 뒤"에 나올 곳을 미리 예고 | NaviHelper |
+| 어느 쪽 창밖인지 | "오른쪽에 보이는" | FusedLocation |
+| 지금 말해도 되는지 | 회전 앞에서는 말을 멈춤 | NaviHelper 회전 안내 |
+| 정말 들렀는지 | 차를 세운 곳에만 방문 도장 | Vehicle 기어 |
+| 말로 주고받기 | 해설을 들려주고 "들를래"를 알아들음 | TextToSpeech, SpeechToText |
+
+## 화면
+
+| 곧 지나갈 곳을 미리 | 들를지 묻고 경유지로 추가 |
 |---|---|
-| ![제안 화면](docs/screenshots/5-proposal.png) | ![주행 화면](docs/screenshots/2-driving.png) |
+| ![이야기](docs/screenshots/2-story.png) | ![묻기](docs/screenshots/3-ask.png) |
 
-정차 중에는 계산 내역과 주차장 비교를 보여 줍니다.
+| 회전 앞에서는 말하지 않음 | 지나면 다시 이어서 |
+|---|---|
+| ![쉼](docs/screenshots/5-quiet.png) | ![왼쪽](docs/screenshots/6-left.png) |
 
-![정차 화면](docs/screenshots/1-parked.png)
+정차 중에는 오늘 길 위의 이야기와 방문 도장을 보여 줍니다.
 
-운전 중에는 내비와 나란히 띄워 씁니다. 아래는 Pleos Connect 에뮬레이터에서 `pleos` 빌드를 내비 옆에 띄운 화면입니다. 왼쪽 내비가 안내하는 경로의 남은 시간(1시간 12분)을 온타임이 받아 마감까지의 여유(−3분)를 계산하고, 단기주차장으로 바꿨을 때의 소요 시간도 내비에 물어 비교합니다.
+| 출발 전 | 들른 뒤 |
+|---|---|
+| ![정차](docs/screenshots/1-parked.png) | ![도장](docs/screenshots/7-stamp.png) |
 
-![내비와 나란히 띄운 화면](docs/screenshots/6-split-pleos-live.png)
+주행 화면에는 누를 수 있는 요소가 없습니다. 이야기는 귀로 듣고, 화면은 어느 쪽에 무엇이 있는지만 크게 보여 줍니다.
 
-같은 배치에서 시나리오를 재생하면 이렇게 보입니다. 폭이 좁아지면 숫자와 글자가 그에 맞춰 줄어듭니다.
-
-![내비와 나란히 띄운 시연 재생](docs/screenshots/7-split-proposal.png)
+## 현재 상태 (1차 제출본)
 
 실제로 동작하는 부분:
 
-- 여유 시간 계산, 상태 판정(여유, 주의, 위험), 대안 주차장 선택 (단위 테스트 38개)
-- 주행 중에는 숫자 하나만 보여 주고, 정차 중에는 계산 내역을 보여 주는 화면 전환
-- 여유가 줄면 주차장 변경을 제안하고, 수락하면 목적지를 바꿔 여유를 다시 계산하는 흐름
+- 이야기를 시작할 시점 판단(3km 앞에서 미리, 500m 안이면 건너뜀), 회전 400m 앞에서의 침묵, 경유지 추가, 방문 도장 (단위 테스트 42개)
+- 주행 중에는 이야기 하나만 크게, 정차 중에는 목록과 도장을 보여 주는 화면 전환
+- Pleos Connect SDK 호출 기반: 경로 요청, 남은 주행 시간과 거리 수신, 다른 목적지까지의 소요 시간 조회, 기어 조회를 에뮬레이터에서 확인했습니다 ([확인 기록](docs/pleos-sdk-notes.md))
 
-아직 재생이거나 가정인 부분:
+예시 데이터이거나 아직 연결하지 않은 부분:
 
-- 현재 시각, 남은 주행 시간, 주행 여부는 시나리오 파일을 20배속으로 재생한 값입니다. 화면에 "시연 재생"으로 표시합니다.
-- 음성은 아직 연결하지 않았습니다. "그렇게 해 줘"라는 답은 4초 뒤 수락한 것으로 처리합니다.
-- 주차 6분, 도보 8분과 5분, 버퍼 3분은 설명용 가정입니다.
-- 제출 APK(`fake` 빌드)는 Pleos Connect SDK를 호출하지 않습니다. SDK 구현은 `platform-pleos` 모듈에 있습니다. `pleos` 빌드를 Pleos Connect 에뮬레이터에서 실행해 경로 요청, 남은 주행 시간 수신, 다른 주차장까지의 소요 시간 조회, 기어 조회를 확인했습니다. 음성은 에뮬레이터의 기기 내 엔진 오류로 아직 동작하지 않습니다.
+- **제출 APK(`fake` 빌드)는 경주 드라이브를 10배속으로 재생합니다.** 거리, 방향, 회전 위치는 예시 값이고 화면에 "예시 데이터 재생"으로 표시합니다.
+- **해설은 예시 문장입니다.** 널리 알려진 사실을 짧게 줄여 직접 썼습니다. 한국관광공사 관광 데이터로 바꿀 예정입니다.
+- **음성은 아직 연결하지 않았습니다.** 해설은 화면 자막으로 대신하고, "들를래"라는 답은 3초 뒤 수락한 것으로 처리합니다. 에뮬레이터의 기기 내 음성 엔진이 오류를 내서 서버 모드 연결이 남아 있습니다.
+- **도슨트의 실제 SDK 연결은 아직입니다.** 경유지 추가, 회전 안내 수신, FusedLocation은 SDK 파일에서 메서드만 확인했고 에뮬레이터에서 호출해 보지 않았습니다.
+- `pleos` 빌드는 SDK 연동을 확인하던 초기 프로토타입 화면(공항 가는 길의 여유 시간 계산)으로 열립니다. 위 확인 기록은 이 빌드로 얻었습니다.
+
+![SDK 연동 확인 화면](docs/screenshots/8-sdk-check.png)
 
 ## 저장소 구성
 
 | 경로 | 내용 |
 |---|---|
-| `vehicle-app/` | 차량 앱 (Kotlin, Jetpack Compose). `core-slack` 계산, `core-voice` 음성 답 해석, `core-session` 흐름, `platform-api` 차량 입력 인터페이스, `platform-fake` 시나리오 재생, `platform-pleos` Pleos SDK 구현, `design-system` 디자인 시스템, `app` 화면 |
-| `server/` | 운항 정보와 주차장 현황을 모아 차량 앱에 전달하는 서버 (예정) |
-| `mobile-web/` | 하차 후 스마트폰에서 이어 보는 화면 (예정) |
+| `vehicle-app/` | 차량 앱 (Kotlin, Jetpack Compose) |
+| `vehicle-app/core-session/.../docent` | 도슨트 흐름: 언제 말하고 언제 멈출지 |
+| `vehicle-app/platform-api` | 차량, 내비, 음성, 길 상황, 이야기 인터페이스 |
+| `vehicle-app/platform-fake` | 예시 드라이브 재생 |
+| `vehicle-app/platform-pleos` | Pleos Connect SDK 구현 |
+| `vehicle-app/design-system` | 색, 글자, 간격 토큰과 구성 요소 |
+| `vehicle-app/core-slack`, `core-session/.../session` | 초기 프로토타입(여유 시간 계산). `pleos` 빌드의 SDK 확인 화면이 씁니다 |
 | `apk/` | 제출용 release APK |
-| `docs/` | 설계 문서, SDK 확인 기록, 공모전 규정 요약 |
+| `docs/` | SDK 확인 기록, 디자인 시스템, 공모전 규정 요약 |
 
 ## 실행 방법
 
 APK를 바로 설치하려면 에뮬레이터를 띄운 뒤 아래 명령을 실행합니다.
 
 ```bash
-adb install -r apk/장현호_온타임_release.apk
+adb install -r apk/장현호_길벗_release.apk
 adb shell am start -n io.github.hyunolike.ontime/io.github.hyunolike.ontime.app.MainActivity
 ```
 
-앱이 열리면 정차 화면의 "시연 시작"을 누릅니다. 약 10초 뒤 사고 정체로 여유가 +28분에서 +9분으로 줄고, 주차장을 바꿔 +21분이 된 뒤 약 1분 40초 지점에서 도착합니다.
+앱이 열리면 "시연 시작"을 누릅니다. 약 30초 동안 다음 순서로 진행됩니다.
 
-### 내비와 나란히 띄우기 (Pleos Connect 에뮬레이터)
+1. 5초쯤: "5분 뒤 오른쪽에 대릉원" 이야기
+2. 9초쯤: "들러 볼까요?"에 수락, 경유지 추가
+3. 20초쯤: 우회전 앞에서 "잠시 쉽니다"
+4. 23초쯤: 회전을 지나 "4분 뒤 왼쪽에 첨성대" 이야기
+5. 30초쯤: 대릉원에 도착, 방문 도장
 
-1. 에뮬레이터를 한국 시간대로 띄웁니다. 기본값이 미국 서부 시간이라 그대로 두면 내비의 도착 예정 시각과 온타임의 시각이 어긋납니다.
-
-   ```bash
-   ~/Library/Android/sdk/emulator/emulator -avd <Pleos 기기 이름> -no-snapshot \
-     -dns-server 8.8.8.8,1.1.1.1 -timezone Asia/Seoul
-   ```
-
-2. 온타임을 연 상태에서 앱 영역 오른쪽 끝의 "⋮" 손잡이를 왼쪽으로 끌면 화면이 1:1로 나뉩니다. 빈 쪽에서 하단 바의 내비 아이콘을 누르면 내비가 들어옵니다.
-3. 시연 재생 빌드는 "시연 시작"을 누른 직후에 나누면 됩니다. 앱을 다시 실행하면 한 화면으로 돌아갑니다.
+패키지 이름과 저장소 이름에 남아 있는 `ontime`은 초기 프로토타입의 이름입니다.
 
 소스에서 빌드하려면 JDK 17과 Android SDK(플랫폼 34)가 필요합니다.
 
 ```bash
 cd vehicle-app
-./gradlew test                    # 단위 테스트
-./gradlew :app:assembleFakeDebug   # 시나리오 재생 빌드
-./gradlew :app:assemblePleosDebug  # Pleos SDK 연동 빌드 (Pleos Connect 에뮬레이터 필요)
+./gradlew test                     # 단위 테스트
+./gradlew :app:assembleFakeDebug   # 예시 데이터 재생 빌드
+./gradlew :app:assemblePleosDebug  # Pleos SDK 연동 확인 빌드 (Pleos Connect 에뮬레이터 필요)
 ```
 
 release 빌드는 `vehicle-app/keystore.properties`가 있을 때만 서명됩니다. 키스토어는 저장소에 넣지 않았습니다.
 
+### Pleos Connect 에뮬레이터를 띄울 때
+
+기본 시간대가 미국 서부이고, 명령줄로 띄우면 DNS를 못 잡아 내비가 응답하지 않는 경우가 있습니다.
+
+```bash
+~/Library/Android/sdk/emulator/emulator -avd <Pleos 기기 이름> -no-snapshot \
+  -dns-server 8.8.8.8,1.1.1.1 -timezone Asia/Seoul
+```
+
+앱 영역 오른쪽 끝의 "⋮" 손잡이를 왼쪽으로 끌면 화면이 1:1로 나뉘어 내비와 나란히 띄울 수 있습니다.
+
 ## 테스트 환경 및 필요한 설정
 
-- 실행 확인: Android 14 (API 34) arm64 에뮬레이터, 2560x1600 px, 320 dpi 가로 화면
 - minSdk 28, targetSdk 34
-- 별도 설정이나 API 키, 네트워크 연결이 필요 없습니다.
-- 서버와 모바일 웹은 아직 없습니다. 추가되면 공공데이터포털 서비스 키가 필요하고, 키 없이도 저장된 응답으로 실행할 수 있게 만듭니다.
+- 제출 APK는 별도 설정이나 API 키, 네트워크 연결이 필요 없습니다.
 
 ## Pleos Connect 에뮬레이터 버전과 화면 규격
 
 - Pleos Connect Emulator v2.1.0 (Android API 34), 기기 프로필 `Pleos_Connect_v2_0`
-- 화면 2560x1440 px, 160 dpi. 앱은 화면 오른쪽 영역에 표시됩니다.
-- `pleos` 빌드를 이 에뮬레이터에서 실행해 NaviHelper 경로 요청과 남은 주행 시간 수신, 기어 상태 조회를 확인했습니다. 자세한 결과는 [Pleos SDK 확인 기록](docs/pleos-sdk-notes.md)에 있습니다.
-- 제출 APK(`fake` 빌드)는 일반 Android 14 에뮬레이터(2560x1600 px, 320 dpi)에서 확인했습니다.
+- 화면 2560x1440 px, 160 dpi. 앱은 화면 오른쪽 영역(1682x1210 px)에 표시되고, 내비와 나란히 띄우면 841x1210 px입니다.
+- 제출 APK를 이 에뮬레이터에 설치해 위 시연 순서가 끝까지 도는 것을 확인했습니다.
 
 ## APK 위치
 
-[`apk/장현호_온타임_release.apk`](apk/장현호_온타임_release.apk)
+[`apk/장현호_길벗_release.apk`](apk/장현호_길벗_release.apk)
 
 ## 사용하는 Pleos Connect SDK
 
-`pleos` 빌드에서 NaviHelper, Vehicle, SpeechToText, TextToSpeech를 호출합니다. FusedLocation은 아직 연결하지 않았습니다.
-
-| SDK | 버전 | 용도 |
-|---|---|---|
-| NaviHelper | 3.0.5 | 목적지 재설정, 경유지 추가, 경로 이벤트 수신 |
-| Vehicle | 2.3.2 | 주행가능거리, 도어와 주행 상태 |
-| SpeechToText | 3.3.1 | 일정 등록과 대안 수락 |
-| TextToSpeech | 3.3.1 | 상태가 바뀔 때 음성 안내 |
-| FusedLocation | 1.1.3 | 현재 위치 |
+| SDK | 버전 | 도슨트에서의 용도 | 상태 |
+|---|---|---|---|
+| NaviHelper | 3.0.5 | 남은 거리와 시간, 경유지 추가, 회전 안내 | 경로 요청, 남은 시간, 소요 시간 조회는 에뮬레이터에서 확인. 경유지 추가와 회전 안내는 미확인 |
+| Vehicle | 2.3.2 | 기어 P로 방문 확인, 주행 중 화면 제한 | 기어 조회 확인 |
+| TextToSpeech | 3.3.1 | 해설 읽기 | 에뮬레이터의 기기 내 엔진 오류. 서버 모드 연결 필요 |
+| SpeechToText | 3.3.1 | "들를래", "더 알려 줘" | 미확인 |
+| FusedLocation | 1.1.3 | 진행 방향으로 좌우 판단, 근접 알림 | 미확인 |
 
 ## 문서
 
-- [0단계 구현 계획](docs/superpowers/plans/2026-11-13-stage0-minimal-build.md)
-- [디자인 시스템](docs/design-system.md)
-- [설계 문서](docs/superpowers/specs/2026-11-13-ontime-design.md)
 - [Pleos SDK 확인 기록](docs/pleos-sdk-notes.md)
+- [디자인 시스템](docs/design-system.md)
 - [공모전 규정 요약](docs/contest-rules.md)
+- 초기 프로토타입(여유 시간 계산)의 [설계](docs/superpowers/specs/2026-11-13-ontime-design.md)와 [구현 계획](docs/superpowers/plans/2026-11-13-stage0-minimal-build.md)

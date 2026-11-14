@@ -1,6 +1,8 @@
 package io.github.hyunolike.ontime.app
 
 import android.app.Application
+import io.github.hyunolike.ontime.docent.DocentSession
+import io.github.hyunolike.ontime.docent.DocentState
 import io.github.hyunolike.ontime.session.OnTimeSession
 import io.github.hyunolike.ontime.session.ParkingPreview
 import kotlinx.coroutines.CoroutineScope
@@ -43,7 +45,15 @@ class OnTimeRuntime(app: Application) {
     /** 사용자가 고른 뒤 경로가 바뀌기를 기다리는 주차장의 id. */
     val choosing: StateFlow<String?> = _choosing
 
+    val docent = platform.docent
+    private val docentSession = docent?.let { DocentSession(it.time, it.navi, it.vehicle, it.speech, it.road, it.stories) }
+    val docentState: StateFlow<DocentState?> = docentSession?.state ?: MutableStateFlow(null)
+
+    private val _docentStarted = MutableStateFlow(false)
+    val docentStarted: StateFlow<Boolean> = _docentStarted
+
     init {
+        if (docentSession != null) scope.launch { docentSession.run() }
         scope.launch { session.run() }
         scope.launch {
             // 주행 중에는 비교 화면을 보여 주지 않으므로 소요 시간 조회도 하지 않는다.
@@ -53,6 +63,13 @@ class OnTimeRuntime(app: Application) {
                     delay(PREVIEW_INTERVAL_MS)
                 }
             }
+        }
+    }
+
+    fun startDocentDemo() {
+        val play = docent?.play ?: return
+        if (_docentStarted.compareAndSet(expect = false, update = true)) {
+            scope.launch { play() }
         }
     }
 
