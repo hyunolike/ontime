@@ -14,6 +14,10 @@ import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
+import io.github.hyunolike.ontime.pleos.PleosLocation
 
 /**
  * Pleos Connect SDK에 연결하는 구성.
@@ -23,6 +27,7 @@ import kotlinx.coroutines.SupervisorJob
  */
 object Platform {
     private val LONG_TERM = Destination("icn-t1-long", "장기주차장", 37.4452, 126.4490, "인천 중구 공항로 272")
+    private val WAYPOINT = Destination("poc-waypoint", "시흥하늘휴게소", 37.3899, 126.8663, "경기 시흥시 조남동")
     private val SHORT_TERM = Destination("icn-t1-short", "단기주차장", 37.4478, 126.4525, "인천 중구 공항로 272")
 
     fun create(context: Context): PlatformBundle {
@@ -30,6 +35,7 @@ object Platform {
         val navi = PleosNavi(context, listOf(LONG_TERM, SHORT_TERM), scope).also { it.start() }
         val vehicle = PleosVehicle(context, scope).also { it.start() }
         val speech = PleosSpeech(context).also { it.start() }
+        val location = PleosLocation(context).also { it.start() }
         return PlatformBundle(
             plan = TripPlan(
                 title = "시험용 일정 · 인천공항 제1터미널",
@@ -46,6 +52,19 @@ object Platform {
             speech = speech,
             play = null,
             keepAlive = true,
+            // 도슨트에 쓸 SDK 호출 시험: 경로를 잡고, 경유지를 넣고, 회전 안내와 위치를 받는다.
+            poc = { name ->
+                if (name == "waypoint") {
+                    scope.launch {
+                        delay(8.seconds)
+                        navi.changeDestination(LONG_TERM)
+                        delay(40.seconds)
+                        navi.addWaypoint(WAYPOINT)
+                        delay(20.seconds)
+                        location.logLastKnown()
+                    }
+                }
+            },
         )
     }
 }

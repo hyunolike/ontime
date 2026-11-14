@@ -27,6 +27,18 @@ API Reference 페이지는 스크립트로 그려져 본문을 읽지 못했습�
 | `requestTrip()` | 성공. `onTripInfo`의 `eta`는 초, `distance`는 미터, `estimatedSocAtDest`는 퍼센트. 단기주차장에 대해 eta=3742, distance=74976, socAtDest=87을 받았다. 응답까지 4~11초 걸렸고 안내 중인 경로는 바뀌지 않았다 |
 | 포그라운드 서비스 | 동작. `specialUse` 유형으로 시작이 허용됐고, 내비가 앞에 있는 동안에도 콜백을 계속 받았다 |
 
+### 도슨트에 쓰는 호출 (2026-11-14)
+
+| 항목 | 결과 |
+|---|---|
+| `addWaypoint()` | 성공. `onWaypointChanged`가 `index=FIRST, cmdType=ADD`와 함께 경유지까지의 `duration=2040`(초), `distance=30000`(미터), 통행료를 준다. 이어서 `getWaypointInfo()`를 부르면 `onWayPointInfo`로 이름과 `remainTime`, `remainDistance`가 온다. 응답까지 약 7초 걸렸다 |
+| `getTBTInfo()` | 성공. 안내 중에 부르면 `onTBTInfo`로 앞의 회전 목록이 온다. 예: `TURN_LEFT 80.0 기업지원허브 방면, TURN_RIGHT 380.0 판교IC 방면`. 거리는 미터. 경로가 없으면 빈 목록이다. 저절로 오지 않고 조회해야 온다 |
+| `getCurrentLocationInfo()` | 성공. `onCurrentLocationInfo`로 위도, 경도, `heading`이 온다. 서 있을 때 heading은 0.0이었다 |
+| `onCurrentRoadSpeedLimit` | 1초마다 온다. 에뮬레이터에서는 0이었다 |
+| FusedLocation | `isSupported()`는 true이고 서비스에 연결된다. **`pleos.car.permission.FUSED_LOCATION`은 런타임 권한**이라 매니페스트 선언만으로는 `SecurityException`이 난다. 차량 사용자(user 10)에게 권한을 준 뒤에는 오류가 없었지만, 차가 서 있어 `onChanged`는 오지 않았다 |
+
+시험은 `adb shell am start -S -n io.github.hyunolike.ontime.pleos/io.github.hyunolike.ontime.app.MainActivity --es poc waypoint`로 다시 돌릴 수 있다. 경로를 잡고 40초 뒤 경유지를 넣는다.
+
 알게 된 제약:
 
 - **앱이 뒤로 가면 프로세스가 멈춘다.** `requestRoute()` 직후 내비가 앞으로 나오자 시스템이 앱을 동결했고(`freezing`), 다시 앞으로 올 때까지 콜백이 오지 않았다. 포그라운드 서비스(`KeepAliveService`)를 넣어 해결했다.
@@ -44,7 +56,7 @@ API Reference 페이지는 스크립트로 그려져 본문을 읽지 못했습�
 - 나뉜 상태에서 `requestRoute()`를 부르면 내비가 자기 칸에서 경로를 잡고 온타임은 그대로 보인다. 내비 화면의 1시간 12분과 `remainTime=4320`이 같았다.
 - Android의 `FLAG_ACTIVITY_LAUNCH_ADJACENT`로 내비를 열어서는 나뉘지 않았다. 앱이 스스로 화면을 나누는 방법은 찾지 못했다.
 
-아직 확인하지 못한 것: 앱이 스스로 화면을 나누는 방법, 주행 중 `remainTime`이 줄어드는지, 기어를 D로 바꿨을 때의 화면 전환, STT, TTS 서버 모드, 주행가능거리.
+아직 확인하지 못한 것: 주행 중 FusedLocation의 위치 갱신과 근접 알림, 앱이 스스로 화면을 나누는 방법, 주행 중 `remainTime`이 줄어드는지, 기어를 D로 바꿨을 때의 화면 전환, STT, TTS 서버 모드, 주행가능거리.
 
 ## SDK 파일에서 확인한 것 (2026-11-13)
 

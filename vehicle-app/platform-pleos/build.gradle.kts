@@ -28,4 +28,5 @@ dependencies {
     implementation(libs.pleos.vehicle)
     implementation(libs.pleos.tts)
     implementation(libs.pleos.stt)
+    implementation(libs.pleos.location)
 }

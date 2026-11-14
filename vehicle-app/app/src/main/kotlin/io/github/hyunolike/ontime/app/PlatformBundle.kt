@@ -21,6 +21,8 @@ class PlatformBundle(
     val play: (suspend () -> Unit)?,
     /** 화면이 뒤로 가도 계산을 이어 가야 하면 true. 실제 차량 입력을 받는 빌드에서 켠다. */
     val keepAlive: Boolean = false,
+    /** SDK 호출을 시험하는 동작. `adb shell am start ... --es poc <이름>`으로 부른다. 없으면 null. */
+    val poc: ((String) -> Unit)? = null,
     /** 드라이브 도슨트에 쓰는 입력. 있으면 앱은 도슨트 화면으로 시작한다. */
     val docent: DocentBundle? = null,
 )

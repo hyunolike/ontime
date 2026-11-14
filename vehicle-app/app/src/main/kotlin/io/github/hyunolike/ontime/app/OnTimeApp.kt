@@ -66,6 +66,11 @@ class OnTimeRuntime(app: Application) {
         }
     }
 
+    /** SDK 호출 시험. 실제 SDK 빌드에서만 동작한다. */
+    fun poc(name: String) {
+        platform.poc?.invoke(name)
+    }
+
     fun startDocentDemo() {
         val play = docent?.play ?: return
         if (_docentStarted.compareAndSet(expect = false, update = true)) {

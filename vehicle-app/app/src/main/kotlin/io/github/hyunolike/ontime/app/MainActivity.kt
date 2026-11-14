@@ -22,6 +22,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         val runtime = (application as OnTimeApp).runtime
+        intent?.getStringExtra("poc")?.let(runtime::poc)
         setContent {
             val state by runtime.state.collectAsStateWithLifecycle()
             val started by runtime.started.collectAsStateWithLifecycle()

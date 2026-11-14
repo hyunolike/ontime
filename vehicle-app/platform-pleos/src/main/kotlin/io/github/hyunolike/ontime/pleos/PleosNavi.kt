@@ -2,7 +2,13 @@ package io.github.hyunolike.ontime.pleos
 
 import ai.pleos.playground.navi.constants.NaviErrorCode
 import ai.pleos.playground.navi.constants.NavigationStatus
+import ai.pleos.playground.navi.constants.WaypointIndex
+import ai.pleos.playground.navi.data.CurrentLocationInfo
 import ai.pleos.playground.navi.data.DestinationInfo
+import ai.pleos.playground.navi.data.RequestWaypointInfo
+import ai.pleos.playground.navi.data.TBTInfo
+import ai.pleos.playground.navi.data.WaypointChangedInfo
+import ai.pleos.playground.navi.data.WaypointInfo
 import ai.pleos.playground.navi.data.RouteInfo
 import ai.pleos.playground.navi.data.TripInfo
 import ai.pleos.playground.navi.data.TripRequest
@@ -10,6 +16,7 @@ import ai.pleos.playground.navi.helper.NaviHelper
 import ai.pleos.playground.navi.helper.listener.NaviHelperEventListener
 import android.content.Context
 import io.github.hyunolike.ontime.platform.Destination
+import io.github.hyunolike.ontime.platform.Maneuver
 import io.github.hyunolike.ontime.platform.NaviGateway
 import io.github.hyunolike.ontime.platform.RouteStatus
 import io.github.hyunolike.ontime.slack.Reading
@@ -46,6 +53,7 @@ class PleosNavi(
 ) : NaviGateway {
     private val helper = NaviHelper(context)
     private val _route = MutableSharedFlow<RouteStatus>(replay = 1)
+    private val _maneuver = MutableSharedFlow<Maneuver?>(replay = 1)
     private val tripMutex = Mutex()
     private var pendingTrip: CompletableDeferred<TripInfo?>? = null
 
@@ -65,6 +73,31 @@ class PleosNavi(
                 Source.LIVE,
             )
             _route.tryEmit(RouteStatus(match(destinationInfo), reading))
+        }
+
+        override fun onWaypointChanged(waypointChangedInfo: WaypointChangedInfo) {
+            PleosLog.event("onWaypointChanged", waypointChangedInfo.toString())
+            runCatching { helper.getWaypointInfo() }
+        }
+
+        override fun onWayPointInfo(waypointInfo: List<WaypointInfo>) {
+            PleosLog.event(
+                "onWayPointInfo",
+                waypointInfo.joinToString { "${it.name} remainTime=${it.remainTime} remainDistance=${it.remainDistance}" }
+                    .ifEmpty { "(없음)" },
+            )
+        }
+
+        override fun onTBTInfo(tbtInfo: List<TBTInfo>) {
+            PleosLog.event("onTBTInfo", tbtInfo.take(3).joinToString { "${it.type} ${it.distance} ${it.description}" }.ifEmpty { "(없음)" })
+            _maneuver.tryEmit(tbtInfo.firstOrNull()?.let { Maneuver(it.distance.toInt(), it.description.orEmpty().ifEmpty { it.type.name }) })
+        }
+
+        override fun onCurrentLocationInfo(currentLocationInfo: CurrentLocationInfo) {
+            PleosLog.event(
+                "onCurrentLocationInfo",
+                "lat=${currentLocationInfo.latitude} lon=${currentLocationInfo.longitude} heading=${currentLocationInfo.heading}",
+            )
         }
 
         override fun onRoutingCompleted() {
@@ -128,6 +161,26 @@ class PleosNavi(
         trip?.eta?.toDuration(REMAIN_TIME_UNIT)
     }
 
+    /** 다음 회전. 도슨트가 말을 멈출 구간을 판단하는 데 쓴다. */
+    val nextManeuver: Flow<Maneuver?> = _maneuver
+
+    override suspend fun addWaypoint(to: Destination): Boolean {
+        PleosLog.call("addWaypoint", to.name)
+        return runCatching {
+            helper.addWaypoint(
+                RequestWaypointInfo(
+                    latitude = to.latitude,
+                    longitude = to.longitude,
+                    poiName = to.name,
+                    waypointIndex = WaypointIndex.FIRST,
+                    poiId = "",
+                    address = to.address,
+                    poiSubId = "0",
+                ),
+            )
+        }.onFailure { PleosLog.error("addWaypoint", it) }.isSuccess
+    }
+
     override suspend fun changeDestination(to: Destination): Boolean {
         PleosLog.call("requestRoute", to.name)
         return runCatching {
@@ -148,6 +201,9 @@ class PleosNavi(
 
     private fun requestDestinationInfo() {
         runCatching { helper.getDestinationInfo() }.onFailure { PleosLog.error("getDestinationInfo", it) }
+        // 회전 안내와 현재 위치도 조회해야 답이 온다.
+        runCatching { helper.getTBTInfo() }.onFailure { PleosLog.error("getTBTInfo", it) }
+        runCatching { helper.getCurrentLocationInfo() }.onFailure { PleosLog.error("getCurrentLocationInfo", it) }
     }
 
     /** 좌표가 가까운 등록 목적지를 찾는다. 없으면 내비가 알려 준 그대로 쓴다. */
