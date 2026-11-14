@@ -115,12 +115,7 @@ private fun BreakdownPane(state: SessionState, plan: TripPlan, arrived: Boolean)
                     val last = index == segments.lastIndex
                     BreakdownRow(
                         marker = index to segments,
-                        label = when {
-                            index == 0 -> "${segment.label} · ${state.destinationName}"
-                            // 실제 데이터가 아닌 구간은 이름 옆에 바로 밝힌다.
-                            segment.label == "공항 안" && plan.airportSteps.any { it.estimated } -> "공항 안 (예시)"
-                            else -> segment.label
-                        },
+                        label = if (index == 0) "${segment.label} · ${state.destinationName}" else segment.label,
                         value = if (last) slackLabel(state.slack.displayMinutes) else "− ${segment.minutes.toInt()}분",
                         dimmed = selected != null && selected != index,
                         emphasized = last,
@@ -129,14 +124,6 @@ private fun BreakdownPane(state: SessionState, plan: TripPlan, arrived: Boolean)
                     )
                 }
             }
-        }
-        if (plan.airportSteps.isNotEmpty()) {
-            Text(
-                "공항 안: " + plan.airportSteps.joinToString(", ") { "${it.label} ${it.duration.inWholeMinutes}분" },
-                style = OnTimeTheme.type.label,
-                color = OnTimeTheme.colors.textSecondary,
-                maxLines = 2,
-            )
         }
     }
 }
@@ -233,7 +220,7 @@ private fun ParkingPane(
         }
         if (source == Source.REPLAY) {
             Text(
-                "주행 시간과 시각은 시연용으로 재생한 값이고, 주차와 도보, 공항 안 시간은 예시 값입니다. 공항 안 시간은 인천공항 승객예고와 출국장 혼잡도로 바꿀 예정입니다.",
+                "주행 시간과 시각은 시연용으로 재생한 값이고, 주차와 도보 시간은 설명용 가정입니다.",
                 style = OnTimeTheme.type.caption,
                 color = OnTimeTheme.colors.textSecondary,
             )

@@ -33,7 +33,6 @@ fun SessionState.budgetSegments(): List<BudgetSegment> = listOf(
     BudgetSegment("주행", drive.minutesFloat(), OnTimeIcon.Car),
     BudgetSegment("주차", parking.minutesFloat(), OnTimeIcon.Parking),
     BudgetSegment("도보", walk.minutesFloat(), OnTimeIcon.Walk),
-    BudgetSegment("공항 안", airport.minutesFloat(), OnTimeIcon.Flight),
     BudgetSegment("안전 버퍼", buffer.minutesFloat(), OnTimeIcon.Buffer),
     BudgetSegment("여유", slack.exact.minutesFloat().coerceAtLeast(0f), OnTimeIcon.Clock, tone = level.tone()),
 )

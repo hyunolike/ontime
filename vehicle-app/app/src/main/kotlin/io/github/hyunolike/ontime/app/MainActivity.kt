@@ -10,11 +10,7 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.activity.compose.BackHandler
 import io.github.hyunolike.ontime.app.ui.DrivingScreen
-import io.github.hyunolike.ontime.app.ui.HomeScreen
-import io.github.hyunolike.ontime.app.ui.OutingDrivingScreen
-import io.github.hyunolike.ontime.app.ui.OutingStoppedScreen
 import io.github.hyunolike.ontime.app.ui.StoppedScreen
 import io.github.hyunolike.ontime.app.ui.WaitingScreen
 import io.github.hyunolike.ontime.design.theme.OnTimeTheme
@@ -30,39 +26,11 @@ class MainActivity : ComponentActivity() {
             val previews by runtime.previews.collectAsStateWithLifecycle()
             val choosing by runtime.choosing.collectAsStateWithLifecycle()
             val current = state
-            val mode by runtime.mode.collectAsStateWithLifecycle()
-            val outingState by runtime.outingState.collectAsStateWithLifecycle()
-            val outingStarted by runtime.outingStarted.collectAsStateWithLifecycle()
-            val outingOptions by runtime.outingOptions.collectAsStateWithLifecycle()
-            val outingChoosing by runtime.outingChoosing.collectAsStateWithLifecycle()
-            val outing = runtime.outing
-            // 일정 화면에서 뒤로 가면 일정 목록으로 돌아간다.
-            BackHandler(enabled = outing != null && mode != null) { runtime.select(null) }
-            val driving = if (mode == Mode.OUTING) outingState?.driving == true else current?.driving == true
             Box(Modifier.fillMaxSize().safeDrawingPadding()) {
                 // 야간 색으로 고정한다. 주행 중 눈부심이 적고 콘셉트 시안과 같은 분위기다.
                 // 주간 색은 디자인 시스템에 준비돼 있고 갤러리에서 확인할 수 있다.
-                OnTimeTheme(darkTheme = true, driving = mode != null && driving) {
-                    val trip = outingState
+                OnTimeTheme(darkTheme = true, driving = current?.driving == true) {
                     when {
-                        outing != null && mode == null -> HomeScreen(
-                            outing = outing.plan,
-                            airport = runtime.plan,
-                            airportLabel = runtime.departureLabel,
-                            onSelect = runtime::select,
-                        )
-                        outing != null && mode == Mode.OUTING && trip != null && trip.driving ->
-                            OutingDrivingScreen(trip, outing.plan)
-                        outing != null && mode == Mode.OUTING && trip != null -> OutingStoppedScreen(
-                            state = trip,
-                            plan = outing.plan,
-                            arrived = outingStarted,
-                            options = outingOptions,
-                            choosing = outingChoosing,
-                            onChoose = runtime::chooseOuting,
-                            onStartDemo = if (!outingStarted) runtime::startOutingDemo else null,
-                        )
-                        mode == Mode.OUTING -> Unit
                         // 내비에 등록된 주차장으로 가는 경로가 아직 없다.
                         current == null -> WaitingScreen(runtime.plan, runtime.departureLabel, runtime::startGuidance)
                         // 주행 중에는 숫자 하나만, 내역과 버튼은 정차 중에만 보여 준다.
