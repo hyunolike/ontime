@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 400">
+  <defs>
+    <clipPath id="frame">
+      <rect width="1280" height="400" rx="24"/>
+    </clipPath>
+    <path id="road" d="M-48 334 C86 334 170 302 257 256
+      S416 166 524 188 C578 199 631 228 680 234
+      C777 246 835 180 913 145 S1058 92 1190 102 L1328 112"/>
+  </defs>
+
+  <g clip-path="url(#frame)">
+    <rect width="1280" height="400" rx="24" fill="#0B0C0E"/>
+
+    <!-- Low mounds along the road. -->
+    <path fill="#18211F" d="M63 185 C104 178 122 123 190 106
+      C267 86 306 155 342 175 C375 194 276 204 217 203
+      C145 204 102 198 63 185Z"/>
+    <path fill="#202C28" d="M209 162 C249 147 270 87 333 70
+      C415 49 452 125 506 146 C544 161 456 181 371 181
+      C299 181 246 176 209 162Z"/>
+    <path fill="#283632" d="M248 151 C281 128 303 85 347 75
+      C393 65 425 93 447 117 C410 95 381 90 350 98
+      C313 106 286 139 248 151Z"/>
+    <path fill="#141C1B" d="M619 121 C653 112 675 69 726 62
+      C775 55 801 96 839 108 C866 118 800 133 744 135
+      C690 136 643 131 619 121Z"/>
+    <path fill="#141C1B" d="M324 337 C359 324 379 288 429 282
+      C483 274 506 318 554 335 C567 344 514 356 449 356
+      C396 356 354 350 324 337Z"/>
+    <path fill="#18211F" d="M1012 318 C1047 307 1070 261 1120 255
+      C1171 248 1190 292 1227 306 C1259 319 1197 334 1141 337
+      C1081 340 1039 331 1012 318Z"/>
+    <path fill="#202C28" d="M748 336 C805 323 825 266 892 248
+      C982 224 1018 307 1080 332 C1116 348 1014 370 931 370
+      C853 371 789 358 748 336Z"/>
+    <path fill="#283632" d="M789 331 C826 307 849 270 902 255
+      C954 241 987 274 1009 301 C976 275 940 267 905 277
+      C858 288 830 318 789 331Z"/>
+
+    <g fill="none">
+      <use href="#road" stroke="#343A43" stroke-width="56"/>
+      <use href="#road" stroke="#23272E" stroke-width="52"/>
+      <g stroke-width="5" stroke-linecap="round" stroke-dasharray="0 15">
+        <path stroke="#FFC857" d="M-48 334 C86 334 170 302 257 256
+          S416 166 524 188 C578 199 631 228 680 234"/>
+        <path stroke="#777B82" d="M680 234 C777 246 835 180 913 145
+          S1058 92 1190 102 L1328 112"/>
+      </g>
+    </g>
+
+    <!-- Car heading along the curve, viewed from above. -->
+    <g transform="translate(680 234) rotate(7)">
+      <rect x="-30" y="-15" width="60" height="30" rx="10" fill="#0B0C0E"/>
+      <rect x="-27" y="-12" width="54" height="24" rx="8" fill="#F6F3EC"/>
+      <path fill="#343A43" d="M7-9 H15 L18-6 V6 L15 9 H7Z"/>
+      <path fill="#343A43" d="M-17-8 H-11 V8 H-17 L-20 5 V-5Z"/>
+    </g>
+
+    <!-- Story marker on the passenger side, ahead of the car. -->
+    <g transform="translate(928 216)">
+      <path d="M-6 12 L0 22 L6 12Z" fill="#FFC857"/>
+      <circle r="15" fill="#0B0C0E" stroke="#FFC857" stroke-width="3"/>
+      <circle r="4" fill="#FFC857"/>
+    </g>
+  </g>
+</svg>

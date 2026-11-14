@@ -1,6 +1,11 @@
 <div align="center">
 
-<img src="docs/images/icon.png" width="120" alt="길벗 앱 아이콘">
+<img src="docs/images/banner.svg" width="100%" alt="경주 고분 사이 길을 달리는 차와 앞쪽의 장소 표시">
+
+<br>
+<br>
+
+<img src="docs/images/icon.svg" width="112" alt="길벗 앱 아이콘">
 
 # 길벗
 
