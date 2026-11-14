@@ -5,7 +5,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,6 +28,7 @@ import io.github.hyunolike.ontime.design.component.StatusBadge
 import io.github.hyunolike.ontime.design.component.Text
 import io.github.hyunolike.ontime.design.component.TimeBudgetBar
 import io.github.hyunolike.ontime.design.component.slackLabel
+import io.github.hyunolike.ontime.design.theme.LocalWideLayout
 import io.github.hyunolike.ontime.design.theme.Motion
 import io.github.hyunolike.ontime.design.theme.OnTimeTheme
 import io.github.hyunolike.ontime.design.theme.Size
@@ -97,6 +97,11 @@ private fun SuggestionBanner(suggestion: Suggestion?) {
             SuggestionStatus.DECLINED -> Triple(OnTimeIcon.Navigation, Tone.Neutral, "경로를 그대로 유지합니다")
             SuggestionStatus.FAILED -> Triple(OnTimeIcon.Error, Tone.Critical, shown.result ?: "경로를 바꾸지 못했습니다")
         }
+        val before = shown.currentMinutes
+        val after = shown.expectedMinutes
+        val showChange = shown.status == SuggestionStatus.PROPOSED && before != null && after != null
+        // 내비와 나란히 떠 폭이 좁으면 여유 변화를 문장 아래로 내린다.
+        val wide = LocalWideLayout.current
         Card(Modifier.fillMaxWidth(), selected = shown.status == SuggestionStatus.PROPOSED, accent = OnTimeTheme.colors.tone(tone)) {
             Row(horizontalArrangement = Arrangement.spacedBy(Space.lg), verticalAlignment = Alignment.CenterVertically) {
                 Icon(icon, tint = OnTimeTheme.colors.tone(tone), size = Size.iconLarge)
@@ -105,20 +110,21 @@ private fun SuggestionBanner(suggestion: Suggestion?) {
                     if (shown.status == SuggestionStatus.PROPOSED) {
                         Text("\"그렇게 해 줘\"라고 말하면 바꿉니다", style = OnTimeTheme.type.label, color = OnTimeTheme.colors.textSecondary, maxLines = 1)
                     }
+                    if (showChange && !wide) SlackChange(before!!, after!!)
                 }
-                val before = shown.currentMinutes
-                val after = shown.expectedMinutes
-                if (shown.status == SuggestionStatus.PROPOSED && before != null && after != null) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(Space.sm), verticalAlignment = Alignment.CenterVertically) {
-                            Text(slackLabel(before), style = OnTimeTheme.type.title, color = OnTimeTheme.colors.textSecondary, maxLines = 1)
-                            Icon(OnTimeIcon.ArrowForward, tint = OnTimeTheme.colors.textSecondary)
-                            Text(slackLabel(after), style = OnTimeTheme.type.headline, color = OnTimeTheme.colors.positive, maxLines = 1)
-                        }
-                    }
-                }
+                if (showChange && wide) SlackChange(before!!, after!!)
             }
         }
+    }
+}
+
+/** 제안을 받아들이면 여유가 어떻게 바뀌는지. 예: +9분 → +21분 */
+@Composable
+private fun SlackChange(before: Int, after: Int) {
+    Row(horizontalArrangement = Arrangement.spacedBy(Space.sm), verticalAlignment = Alignment.CenterVertically) {
+        Text(slackLabel(before), style = OnTimeTheme.type.title, color = OnTimeTheme.colors.textSecondary, maxLines = 1)
+        Icon(OnTimeIcon.ArrowForward, tint = OnTimeTheme.colors.textSecondary)
+        Text(slackLabel(after), style = OnTimeTheme.type.headline, color = OnTimeTheme.colors.positive, maxLines = 1)
     }
 }
 

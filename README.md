@@ -16,9 +16,13 @@
 
 ![정차 화면](docs/screenshots/1-parked.png)
 
-Pleos Connect 에뮬레이터에서 실제 내비 값으로 계산한 화면입니다(`pleos` 빌드).
+운전 중에는 내비와 나란히 띄워 씁니다. 아래는 Pleos Connect 에뮬레이터에서 `pleos` 빌드를 내비 옆에 띄운 화면입니다. 왼쪽 내비가 안내하는 경로의 남은 시간(1시간 12분)을 온타임이 받아 마감까지의 여유(−3분)를 계산하고, 단기주차장으로 바꿨을 때의 소요 시간도 내비에 물어 비교합니다.
 
-![실제 내비 값으로 계산한 화면](docs/screenshots/3-pleos-live.png)
+![내비와 나란히 띄운 화면](docs/screenshots/6-split-pleos-live.png)
+
+같은 배치에서 시나리오를 재생하면 이렇게 보입니다. 폭이 좁아지면 숫자와 글자가 그에 맞춰 줄어듭니다.
+
+![내비와 나란히 띄운 시연 재생](docs/screenshots/7-split-proposal.png)
 
 실제로 동작하는 부분:
 
@@ -53,6 +57,18 @@ adb shell am start -n io.github.hyunolike.ontime/io.github.hyunolike.ontime.app.
 ```
 
 앱이 열리면 정차 화면의 "시연 시작"을 누릅니다. 약 10초 뒤 사고 정체로 여유가 +28분에서 +9분으로 줄고, 주차장을 바꿔 +21분이 된 뒤 약 1분 40초 지점에서 도착합니다.
+
+### 내비와 나란히 띄우기 (Pleos Connect 에뮬레이터)
+
+1. 에뮬레이터를 한국 시간대로 띄웁니다. 기본값이 미국 서부 시간이라 그대로 두면 내비의 도착 예정 시각과 온타임의 시각이 어긋납니다.
+
+   ```bash
+   ~/Library/Android/sdk/emulator/emulator -avd <Pleos 기기 이름> -no-snapshot \
+     -dns-server 8.8.8.8,1.1.1.1 -timezone Asia/Seoul
+   ```
+
+2. 온타임을 연 상태에서 앱 영역 오른쪽 끝의 "⋮" 손잡이를 왼쪽으로 끌면 화면이 1:1로 나뉩니다. 빈 쪽에서 하단 바의 내비 아이콘을 누르면 내비가 들어옵니다.
+3. 시연 재생 빌드는 "시연 시작"을 누른 직후에 나누면 됩니다. 앱을 다시 실행하면 한 화면으로 돌아갑니다.
 
 소스에서 빌드하려면 JDK 17과 Android SDK(플랫폼 34)가 필요합니다.
 
