@@ -9,8 +9,16 @@ import java.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
-/** 갈 수 있는 주차장 하나. 내비 목적지와 거기서 드는 주차, 도보 시간을 묶는다. */
-data class ParkingChoice(val destination: Destination, val parking: Duration, val walk: Duration) {
+/**
+ * 갈 수 있는 주차장 하나. 내비 목적지와 거기서 드는 주차, 도보 시간을 묶는다.
+ * [dailyFee]는 소형차 하루 최대 요금(원)이다. 모르면 null.
+ */
+data class ParkingChoice(
+    val destination: Destination,
+    val parking: Duration,
+    val walk: Duration,
+    val dailyFee: Int? = null,
+) {
     val option: ParkingOption get() = ParkingOption(destination.id, destination.name, parking, walk)
 }
 
@@ -42,6 +50,7 @@ data class ParkingPreview(
     val drive: Duration,
     val walk: Duration,
     val current: Boolean,
+    val dailyFee: Int? = null,
 )
 
 data class SessionState(

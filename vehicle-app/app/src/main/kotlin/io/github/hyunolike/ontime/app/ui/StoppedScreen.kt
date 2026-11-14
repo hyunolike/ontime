@@ -67,7 +67,7 @@ fun StoppedScreen(
 ) {
     val wide = LocalWideLayout.current
     Column(Modifier.fillMaxSize().padding(horizontal = Size.screenPadding, vertical = Space.xxl), verticalArrangement = Arrangement.spacedBy(Space.xl)) {
-        TripHeader(plan, departureLabel, state.source, trailing = "P 정차 중")
+        TripHeader(plan, departureLabel, state.source)
         if (wide) {
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(Space.xxl)) {
                 Column(Modifier.weight(1.15f).fillMaxHeight().verticalScroll(rememberScrollState())) {
@@ -184,6 +184,19 @@ private fun ParkingPane(
             Text("비교할 주차장 정보를 불러오는 중입니다", color = OnTimeTheme.colors.textSecondary)
         }
         val best = previews.maxByOrNull { it.slack.exact }
+        val current = previews.firstOrNull { it.current }
+        // 더 나은 주차장이 있으면 비교 카드 위에 바로 바꾸는 버튼을 둔다. 카드를 눌러도 같다.
+        if (best != null && current != null && best != current && !arrived && choosing == null &&
+            best.slack.displayMinutes - current.slack.displayMinutes >= SWITCH_MIN_GAIN_MINUTES
+        ) {
+            val gain = best.slack.displayMinutes - current.slack.displayMinutes
+            Button(
+                "${best.destination.name.withEuro()} 바꾸기 · 여유 +${gain}분",
+                onClick = { onChoose(best.destination.id) },
+                icon = OnTimeIcon.Swap,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
         previews.forEach { preview ->
             val id = preview.destination.id
             Card(
@@ -202,8 +215,9 @@ private fun ParkingPane(
                                 preview == best -> Chip("가장 여유", tone = Tone.Info)
                             }
                         }
+                        val fee = preview.dailyFee?.let { " · 하루 최대 ${feeText(it)}" }.orEmpty()
                         Text(
-                            "주행 ${minutesText(preview.drive)} · 도보 ${minutesText(preview.walk)}",
+                            "주행 ${minutesText(preview.drive)} · 도보 ${minutesText(preview.walk)}$fee",
                             style = OnTimeTheme.type.label,
                             color = OnTimeTheme.colors.textSecondary,
                             maxLines = 1,
@@ -218,6 +232,13 @@ private fun ParkingPane(
                 }
             }
         }
+        if (source == Source.ADJUSTED) {
+            Text(
+                "실제 내비 값에 시연용 정체 지연을 더한 값입니다.",
+                style = OnTimeTheme.type.caption,
+                color = OnTimeTheme.colors.textSecondary,
+            )
+        }
         if (source == Source.REPLAY) {
             Text(
                 "주행 시간과 시각은 시연용으로 재생한 값이고, 주차와 도보 시간은 설명용 가정입니다.",
@@ -231,3 +252,6 @@ private fun ParkingPane(
         }
     }
 }
+
+/** 이 정도는 늘어나야 바꾸자고 권한다. 제안 기준(3분)과 같다. */
+private const val SWITCH_MIN_GAIN_MINUTES = 3

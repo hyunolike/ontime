@@ -30,6 +30,9 @@ class OnTimeRuntime(app: Application) {
     val keepAlive = platform.keepAlive
     val state = session.state
 
+    /** 시연 조정기. 실제 SDK 빌드에만 있다. */
+    val demo = platform.demo
+
     private val _started = MutableStateFlow(false)
     val started: StateFlow<Boolean> = _started
 
@@ -55,6 +58,9 @@ class OnTimeRuntime(app: Application) {
             }
         }
     }
+
+    /** 제안에 화면 버튼으로 답한다. */
+    fun answerProposal(accept: Boolean) = session.answerProposal(accept)
 
     fun startGuidance() {
         scope.launch { session.startGuidance() }

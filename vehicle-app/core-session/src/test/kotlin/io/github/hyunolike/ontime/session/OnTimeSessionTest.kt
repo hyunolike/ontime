@@ -18,6 +18,8 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -176,6 +178,34 @@ class OnTimeSessionTest {
         // 제안에 적힌 숫자는 그 순간 화면의 숫자와 같아야 한다.
         assertEquals(9, proposed.currentMinutes)
         assertEquals(21, proposed.expectedMinutes)
+    }
+
+    @Test
+    fun `음성을 못 알아들어도 화면 버튼으로 수락하면 목적지를 바꾼다`() = runTest {
+        val player = ScenarioPlayer(ScenarioA.scenario)
+        val speech = ScriptedSpeech(answer = false, answerDelay = 1.seconds)
+        val session = OnTimeSession(plan, player, player, player, speech)
+        backgroundScope.launch { session.run() }
+        backgroundScope.launch {
+            // 제안이 나오고 음성이 실패한 뒤에 버튼을 누른다.
+            session.state.first { it?.suggestion?.status == SuggestionStatus.PROPOSED }
+            delay(3.seconds)
+            session.answerProposal(true)
+        }
+        launch { player.run() }
+        advanceUntilIdle()
+        runCurrent()
+
+        assertEquals("단기주차장", session.state.value?.destinationName)
+        assertEquals(SuggestionStatus.ACCEPTED, session.state.value?.suggestion?.status)
+    }
+
+    @Test
+    fun `기다리는 제안이 없을 때 버튼 답은 무시한다`() = runTest {
+        val player = ScenarioPlayer(ScenarioA.scenario)
+        val session = OnTimeSession(plan, player, player, player, ScriptedSpeech())
+        session.answerProposal(true)
+        assertEquals(ScenarioA.LONG_TERM, player.route.first().destination)
     }
 
     @Test

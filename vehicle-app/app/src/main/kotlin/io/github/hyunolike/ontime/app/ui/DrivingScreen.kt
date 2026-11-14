@@ -20,7 +20,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import io.github.hyunolike.ontime.design.component.Button
 import io.github.hyunolike.ontime.design.component.Card
+import io.github.hyunolike.ontime.design.component.Chip
 import io.github.hyunolike.ontime.design.component.Icon
 import io.github.hyunolike.ontime.design.component.OnTimeIcon
 import io.github.hyunolike.ontime.design.component.SlackNumber
@@ -45,9 +47,9 @@ import kotlinx.coroutines.delay
  * 움직임은 값이나 상태가 바뀔 때 한 번뿐이고 반복되는 움직임은 쓰지 않는다.
  */
 @Composable
-fun DrivingScreen(state: SessionState, plan: TripPlan, departureLabel: String) {
+fun DrivingScreen(state: SessionState, plan: TripPlan, departureLabel: String, onAccept: () -> Unit) {
     Column(Modifier.fillMaxSize().padding(horizontal = Size.screenPadding, vertical = Space.xxl)) {
-        TripHeader(plan, departureLabel, state.source, trailing = "D 주행 중")
+        TripHeader(plan, departureLabel, state.source)
 
         Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.Center) {
             Row(horizontalArrangement = Arrangement.spacedBy(Space.lg), verticalAlignment = Alignment.CenterVertically) {
@@ -58,7 +60,9 @@ fun DrivingScreen(state: SessionState, plan: TripPlan, departureLabel: String) {
                 }
             }
             SlackNumber(state.slack.displayMinutes, state.level.tone())
-            TimeBudgetBar(state.budgetSegments(), Modifier.padding(top = Space.sm), height = 20.dp)
+            val segments = state.budgetSegments()
+            TimeBudgetBar(segments, Modifier.padding(top = Space.sm), height = 20.dp)
+            BudgetLegend(segments, Modifier.padding(top = Space.sm))
             Row(
                 Modifier.fillMaxWidth().padding(top = Space.md),
                 horizontalArrangement = Arrangement.spacedBy(Space.sm),
@@ -71,7 +75,7 @@ fun DrivingScreen(state: SessionState, plan: TripPlan, departureLabel: String) {
             }
         }
 
-        SuggestionBanner(state.suggestion)
+        SuggestionBanner(state.suggestion, onAccept)
     }
 }
 
@@ -80,7 +84,7 @@ fun DrivingScreen(state: SessionState, plan: TripPlan, departureLabel: String) {
  * 결과는 잠시 보여 준 뒤 스스로 사라져 숫자만 남긴다.
  */
 @Composable
-private fun SuggestionBanner(suggestion: Suggestion?) {
+private fun SuggestionBanner(suggestion: Suggestion?, onAccept: () -> Unit) {
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(suggestion) {
         visible = suggestion != null
@@ -108,11 +112,23 @@ private fun SuggestionBanner(suggestion: Suggestion?) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Space.xs)) {
                     Text(text, style = OnTimeTheme.type.bodyLarge, maxLines = 2)
                     if (shown.status == SuggestionStatus.PROPOSED) {
-                        Text("\"그렇게 해 줘\"라고 말하면 바꿉니다", style = OnTimeTheme.type.label, color = OnTimeTheme.colors.textSecondary, maxLines = 1)
+                        Row(horizontalArrangement = Arrangement.spacedBy(Space.md), verticalAlignment = Alignment.CenterVertically) {
+                            Chip("듣는 중", tone = Tone.Info, icon = OnTimeIcon.Mic)
+                            Text("\"그렇게 해 줘\"라고 말해 주세요", style = OnTimeTheme.type.label, color = OnTimeTheme.colors.textSecondary, maxLines = 1)
+                        }
                     }
                     if (showChange && !wide) SlackChange(before!!, after!!)
+                    // 음성이 실패해도 한 번의 터치로 답할 수 있게 한다. 버튼은 하나만 둔다.
+                    if (shown.status == SuggestionStatus.PROPOSED && !wide) {
+                        Button("바꾸기", onAccept, icon = OnTimeIcon.Swap, modifier = Modifier.fillMaxWidth())
+                    }
                 }
-                if (showChange && wide) SlackChange(before!!, after!!)
+                if (wide && (showChange || shown.status == SuggestionStatus.PROPOSED)) {
+                    Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(Space.sm)) {
+                        if (showChange) SlackChange(before!!, after!!)
+                        if (shown.status == SuggestionStatus.PROPOSED) Button("바꾸기", onAccept, icon = OnTimeIcon.Swap)
+                    }
+                }
             }
         }
     }

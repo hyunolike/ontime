@@ -1,5 +1,6 @@
 package io.github.hyunolike.ontime.app
 
+import io.github.hyunolike.ontime.platform.DemoAdjuster
 import io.github.hyunolike.ontime.platform.NaviGateway
 import io.github.hyunolike.ontime.platform.SpeechGateway
 import io.github.hyunolike.ontime.platform.TimeSource
@@ -19,4 +20,6 @@ class PlatformBundle(
     val play: (suspend () -> Unit)?,
     /** 화면이 뒤로 가도 계산을 이어 가야 하면 true. 실제 차량 입력을 받는 빌드에서 켠다. */
     val keepAlive: Boolean = false,
+    /** 실제 차량 입력 위에 시연용 조정을 얹을 수 있으면 그 조정기. 재생 빌드에서는 null. */
+    val demo: DemoAdjuster? = null,
 )

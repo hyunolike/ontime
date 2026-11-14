@@ -1,6 +1,7 @@
 package io.github.hyunolike.ontime.app
 
 import android.content.Context
+import io.github.hyunolike.ontime.platform.DemoAdjuster
 import io.github.hyunolike.ontime.platform.Destination
 import io.github.hyunolike.ontime.platform.SystemTimeSource
 import io.github.hyunolike.ontime.pleos.PleosNavi
@@ -29,23 +30,27 @@ object Platform {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
         val navi = PleosNavi(context, listOf(LONG_TERM, SHORT_TERM), scope).also { it.start() }
         val vehicle = PleosVehicle(context, scope).also { it.start() }
+        // 시연 조정: 실제 내비 값 위에 정체 지연과 가상 주행만 얹는다.
+        val demo = DemoAdjuster(navi, vehicle)
         val speech = PleosSpeech(context).also { it.start() }
         return PlatformBundle(
             plan = TripPlan(
-                title = "시험용 일정 · 인천공항 제1터미널",
+                title = "인천공항 제1터미널",
                 deadline = Instant.now().plus(90, ChronoUnit.MINUTES).truncatedTo(ChronoUnit.MINUTES),
                 parkingChoices = listOf(
-                    ParkingChoice(LONG_TERM, parking = 6.minutes, walk = 8.minutes),
-                    ParkingChoice(SHORT_TERM, parking = 6.minutes, walk = 5.minutes),
+                    // 요금은 소형차 하루 최대 요금(원). 언론과 블로그에 실린 값이라 공식 안내로 다시 확인해야 한다.
+                    ParkingChoice(LONG_TERM, parking = 6.minutes, walk = 8.minutes, dailyFee = 9_000),
+                    ParkingChoice(SHORT_TERM, parking = 6.minutes, walk = 5.minutes, dailyFee = 24_000),
                 ),
             ),
-            departureLabel = "SDK 연동 시험",
+            departureLabel = "국제선 출발",
             time = SystemTimeSource(),
-            navi = navi,
-            vehicle = vehicle,
+            navi = demo.navi,
+            vehicle = demo.vehicle,
             speech = speech,
             play = null,
             keepAlive = true,
+            demo = demo,
         )
     }
 }

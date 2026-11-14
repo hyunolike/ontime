@@ -19,8 +19,9 @@ object Platform {
                 title = "인천공항 제1터미널",
                 deadline = Instant.parse("2026-12-03T06:55:00Z"), // 15:55 KST
                 parkingChoices = listOf(
-                    ParkingChoice(ScenarioA.LONG_TERM, parking = 6.minutes, walk = 8.minutes),
-                    ParkingChoice(ScenarioA.SHORT_TERM, parking = 6.minutes, walk = 5.minutes),
+                    // 요금은 소형차 하루 최대 요금(원). 언론과 블로그에 실린 값이라 공식 안내로 다시 확인해야 한다.
+                    ParkingChoice(ScenarioA.LONG_TERM, parking = 6.minutes, walk = 8.minutes, dailyFee = 9_000),
+                    ParkingChoice(ScenarioA.SHORT_TERM, parking = 6.minutes, walk = 5.minutes, dailyFee = 24_000),
                 ),
             ),
             departureLabel = "16:40 출발",

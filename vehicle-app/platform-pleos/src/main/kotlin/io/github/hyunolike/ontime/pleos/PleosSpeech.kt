@@ -101,9 +101,13 @@ class PleosSpeech(context: Context) : SpeechGateway {
         hearing = heard
         PleosLog.call("stt.request")
         stt.request()
-        val text = withTimeoutOrNull(LISTEN_TIMEOUT) { heard.await() }
-        hearing = null
-        runCatching { stt.stop() }
+        // 화면 버튼으로 먼저 답하면 이 대기가 취소된다. 그때도 인식기는 반드시 멈춘다.
+        val text = try {
+            withTimeoutOrNull(LISTEN_TIMEOUT) { heard.await() }
+        } finally {
+            hearing = null
+            runCatching { stt.stop() }
+        }
         // 못 알아들었거나 답이 없으면 경로를 유지한다.
         YesNoParser.parse(text.orEmpty()) == true
     }

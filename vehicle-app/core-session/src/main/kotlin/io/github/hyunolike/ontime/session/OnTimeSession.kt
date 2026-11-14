@@ -15,14 +15,19 @@ import io.github.hyunolike.ontime.slack.SlackThresholds
 import java.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toKotlinDuration
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.selects.select
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.launch
 
 /**
@@ -37,12 +42,15 @@ class OnTimeSession(
     private val speech: SpeechGateway,
     private val thresholds: SlackThresholds = SlackThresholds(),
     private val staleAfter: Duration = 2.minutes,
+    /** 제안에 답을 기다리는 시간. 음성을 못 알아들어도 이 시간 안에는 화면으로 답할 수 있다. */
+    private val answerWindow: Duration = 12.seconds,
 ) {
     private val tracker = SlackLevelTracker(thresholds)
     private val proposedIds = mutableSetOf<String>()
     private var proposal: Job? = null
     private var lastInput: SlackInput? = null
     private var lastRoute: RouteStatus? = null
+    private var touchAnswer: CompletableDeferred<Boolean>? = null
 
     private val _state = MutableStateFlow<SessionState?>(null)
 
@@ -113,7 +121,7 @@ class OnTimeSession(
             val drive = if (current) input.drive else navi.estimateRemainingDrive(choice.destination)
             drive?.let {
                 val slack = SlackCalculator.calculate(input.copy(drive = it, parking = choice.parking, walk = choice.walk))
-                ParkingPreview(choice.destination, slack, thresholds.levelFor(slack.exact), it, choice.walk, current)
+                ParkingPreview(choice.destination, slack, thresholds.levelFor(slack.exact), it, choice.walk, current, choice.dailyFee)
             }
         }
     }
@@ -125,6 +133,14 @@ class OnTimeSession(
         val accepted = navi.changeDestination(target)
         speech.say(if (accepted) "목적지를 ${target.name.withEuro()} 바꿨어요" else "경로를 바꾸지 못했습니다")
         return accepted
+    }
+
+    /**
+     * 화면의 버튼으로 제안에 답한다. 음성이 실패해도 시연과 사용이 멈추지 않게 하는 대비책이다.
+     * 기다리는 제안이 없으면 아무 일도 하지 않는다.
+     */
+    fun answerProposal(accept: Boolean) {
+        touchAnswer?.complete(accept)
     }
 
     private suspend fun propose(input: SlackInput, route: RouteStatus) {
@@ -144,7 +160,7 @@ class OnTimeSession(
             Suggestion(text, status, result, currentMinutes = before, expectedMinutes = after)
         setSuggestion(suggestion(SuggestionStatus.PROPOSED))
 
-        if (!speech.askYesNo(text)) {
+        if (!awaitAnswer(text)) {
             setSuggestion(suggestion(SuggestionStatus.DECLINED))
             return
         }
@@ -159,6 +175,25 @@ class OnTimeSession(
         val result = "목적지를 ${target.name.withEuro()} 바꿨어요. 여유 ${signedMinutes(changed.slack.displayMinutes)}"
         setSuggestion(suggestion(SuggestionStatus.ACCEPTED, result))
         speech.say(result)
+    }
+
+    /**
+     * 음성과 화면 중 먼저 온 답을 쓴다. 음성으로 수락하면 바로 바꾸고, 음성을 못 알아들었거나
+     * 거절로 들렸으면 남은 시간 동안 화면의 답을 기다린다. 답이 없으면 경로를 유지한다.
+     */
+    private suspend fun awaitAnswer(prompt: String): Boolean = coroutineScope {
+        val touch = CompletableDeferred<Boolean>()
+        touchAnswer = touch
+        val voice = async { speech.askYesNo(prompt) }
+        val accepted = withTimeoutOrNull(answerWindow) {
+            select {
+                voice.onAwait { heardYes -> heardYes || touch.await() }
+                touch.onAwait { it }
+            }
+        } ?: false
+        touchAnswer = null
+        voice.cancel()
+        accepted
     }
 
     private fun setSuggestion(suggestion: Suggestion) {
