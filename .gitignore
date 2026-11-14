@@ -33,3 +33,6 @@ dist/
 *.docx
 *접수양식*
 .kotlin/
+
+# 소개 영상 작업 파일(폰트, 효과음 사본, 중간 산출물)
+brag-output/work/
