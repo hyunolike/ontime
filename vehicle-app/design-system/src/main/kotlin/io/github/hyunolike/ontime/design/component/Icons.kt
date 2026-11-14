@@ -31,6 +31,14 @@ enum class OnTimeIcon(@DrawableRes val resource: Int) {
     Info(R.drawable.ic_info),
     ArrowForward(R.drawable.ic_arrow_forward),
     Charger(R.drawable.ic_ev_station),
+
+    // 혼잡 단계와 나들이, 도착 예보 아이콘은 이 앱을 위해 따로 그린 것이다.
+    CrowdRelaxed(R.drawable.ic_crowd_relaxed),
+    CrowdNormal(R.drawable.ic_crowd_normal),
+    CrowdBusy(R.drawable.ic_crowd_busy),
+    CrowdPacked(R.drawable.ic_crowd_packed),
+    Outing(R.drawable.ic_outing),
+    Arrival(R.drawable.ic_arrival),
 }
 
 /** 뜻을 전하는 아이콘에는 [description]을 넣고, 옆 글자를 꾸미기만 하면 null로 둔다. */

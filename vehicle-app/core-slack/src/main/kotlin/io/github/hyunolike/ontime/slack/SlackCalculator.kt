@@ -16,6 +16,8 @@ data class SlackInput(
     val drive: Duration,
     val parking: Duration,
     val walk: Duration,
+    /** 터미널에 들어선 뒤 마감 지점까지 걸리는 시간. 수속 카운터, 출국장(보안검색) 대기, 탑승구까지의 이동. */
+    val airport: Duration = Duration.ZERO,
     val stopover: Duration = Duration.ZERO,
     val buffer: Duration,
 )
@@ -26,11 +28,11 @@ data class SlackResult(val exact: Duration) {
 }
 
 object SlackCalculator {
-    /** 여유 = 마감 − 현재 − 주행 − 주차 − 도보 − 경유지 정차 − 버퍼 */
+    /** 여유 = 마감 − 현재 − 주행 − 주차 − 도보 − 공항 안 − 경유지 정차 − 버퍼 */
     fun calculate(input: SlackInput): SlackResult {
         val untilDeadline = java.time.Duration.between(input.now, input.deadline).toKotlinDuration()
         return SlackResult(
-            untilDeadline - input.drive - input.parking - input.walk - input.stopover - input.buffer,
+            untilDeadline - input.drive - input.parking - input.walk - input.airport - input.stopover - input.buffer,
         )
     }
 }

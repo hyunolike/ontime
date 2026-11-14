@@ -59,6 +59,7 @@ class OnTimeSession(
                 drive = route.remainingDrive.value,
                 parking = option.parking,
                 walk = option.walk,
+                airport = plan.airport,
                 buffer = plan.buffer,
             )
             lastInput = input
@@ -77,6 +78,7 @@ class OnTimeSession(
                     drive = input.drive,
                     parking = input.parking,
                     walk = input.walk,
+                    airport = input.airport,
                     buffer = input.buffer,
                     source = route.remainingDrive.source,
                     stale = stale,

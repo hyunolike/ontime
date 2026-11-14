@@ -110,4 +110,5 @@ adb shell am start -n io.github.hyunolike.ontime/io.github.hyunolike.ontime.app.
 |---|---|---|
 | Asta Sans | Google Fonts, 42dot | SIL Open Font License 1.1 (`vehicle-app/design-system/ASTA_SANS_OFL.txt`) |
 | 아이콘 16종 | Google Material Symbols Rounded | Apache License 2.0 |
+| 혼잡 단계 4종, 나들이, 도착 예보 아이콘 | Codex로 만든 벡터 | 자체 제작 |
 | 앱 아이콘 | Codex로 만든 벡터 | 자체 제작 |

@@ -80,7 +80,7 @@ fun DrivingScreen(state: SessionState, plan: TripPlan, departureLabel: String) {
  * 결과는 잠시 보여 준 뒤 스스로 사라져 숫자만 남긴다.
  */
 @Composable
-private fun SuggestionBanner(suggestion: Suggestion?) {
+internal fun SuggestionBanner(suggestion: Suggestion?) {
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(suggestion) {
         visible = suggestion != null
@@ -97,8 +97,8 @@ private fun SuggestionBanner(suggestion: Suggestion?) {
             SuggestionStatus.DECLINED -> Triple(OnTimeIcon.Navigation, Tone.Neutral, "경로를 그대로 유지합니다")
             SuggestionStatus.FAILED -> Triple(OnTimeIcon.Error, Tone.Critical, shown.result ?: "경로를 바꾸지 못했습니다")
         }
-        val before = shown.currentMinutes
-        val after = shown.expectedMinutes
+        val before = shown.currentLabel ?: shown.currentMinutes?.let(::slackLabel)
+        val after = shown.expectedLabel ?: shown.expectedMinutes?.let(::slackLabel)
         val showChange = shown.status == SuggestionStatus.PROPOSED && before != null && after != null
         // 내비와 나란히 떠 폭이 좁으면 여유 변화를 문장 아래로 내린다.
         val wide = LocalWideLayout.current
@@ -106,7 +106,7 @@ private fun SuggestionBanner(suggestion: Suggestion?) {
             Row(horizontalArrangement = Arrangement.spacedBy(Space.lg), verticalAlignment = Alignment.CenterVertically) {
                 Icon(icon, tint = OnTimeTheme.colors.tone(tone), size = Size.iconLarge)
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Space.xs)) {
-                    Text(text, style = OnTimeTheme.type.bodyLarge, maxLines = 2)
+                    Text(text, style = OnTimeTheme.type.bodyLarge, maxLines = 3)
                     if (shown.status == SuggestionStatus.PROPOSED) {
                         Text("\"그렇게 해 줘\"라고 말하면 바꿉니다", style = OnTimeTheme.type.label, color = OnTimeTheme.colors.textSecondary, maxLines = 1)
                     }
@@ -118,13 +118,13 @@ private fun SuggestionBanner(suggestion: Suggestion?) {
     }
 }
 
-/** 제안을 받아들이면 여유가 어떻게 바뀌는지. 예: +9분 → +21분 */
+/** 제안을 받아들이면 무엇이 어떻게 바뀌는지. 예: +9분 → +21분, 붐빔 → 여유 */
 @Composable
-private fun SlackChange(before: Int, after: Int) {
+private fun SlackChange(before: String, after: String) {
     Row(horizontalArrangement = Arrangement.spacedBy(Space.sm), verticalAlignment = Alignment.CenterVertically) {
-        Text(slackLabel(before), style = OnTimeTheme.type.title, color = OnTimeTheme.colors.textSecondary, maxLines = 1)
+        Text(before, style = OnTimeTheme.type.title, color = OnTimeTheme.colors.textSecondary, maxLines = 1)
         Icon(OnTimeIcon.ArrowForward, tint = OnTimeTheme.colors.textSecondary)
-        Text(slackLabel(after), style = OnTimeTheme.type.headline, color = OnTimeTheme.colors.positive, maxLines = 1)
+        Text(after, style = OnTimeTheme.type.headline, color = OnTimeTheme.colors.positive, maxLines = 1)
     }
 }
 

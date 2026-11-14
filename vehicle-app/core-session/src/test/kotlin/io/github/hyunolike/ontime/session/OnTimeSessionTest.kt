@@ -179,6 +179,25 @@ class OnTimeSessionTest {
     }
 
     @Test
+    fun `탑승 마감과 공항 안 단계를 넣어도 시나리오의 여유는 같다`() = runTest {
+        val gatePlan = plan.copy(
+            deadline = Instant.parse("2026-12-03T07:25:00Z"), // 탑승 마감 16:25
+            deadlineLabel = "탑승 마감",
+            airportSteps = listOf(
+                AirportStep("수속 카운터", 8.minutes),
+                AirportStep("출국장", 14.minutes),
+                AirportStep("탑승구 이동", 8.minutes),
+            ),
+        )
+        val states = playScenario(ScriptedSpeech(answer = true), gatePlan)
+
+        assertEquals(28, states.first().slack.displayMinutes)
+        assertEquals(30.minutes, states.first().airport)
+        assertTrue(states.any { it.slack.displayMinutes == 9 })
+        assertEquals(21, states.last().slack.displayMinutes)
+    }
+
+    @Test
     fun `받침에 따라 조사를 고른다`() {
         assertEquals("단기주차장으로", "단기주차장".withEuro())
         assertEquals("제2터미널로", "제2터미널".withEuro())

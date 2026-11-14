@@ -48,6 +48,23 @@ class SlackCalculatorTest {
     }
 
     @Test
+    fun `탑승 마감 기준이면 공항 안에서 걸리는 시간도 뺀다`() {
+        // 탑승 마감 16:25, 공항 안 30분(수속 8, 출국장 14, 탑승구 이동 8)이면 수속 마감 15:55 기준과 같은 여유가 나온다.
+        val result = SlackCalculator.calculate(
+            SlackInput(
+                deadline = Instant.parse("2026-12-03T07:25:00Z"),
+                now = Instant.parse("2026-12-03T05:51:00Z"),
+                drive = 38.minutes,
+                parking = 6.minutes,
+                walk = 8.minutes,
+                airport = 30.minutes,
+                buffer = 3.minutes,
+            ),
+        )
+        assertEquals(9, result.displayMinutes)
+    }
+
+    @Test
     fun `경유지 정차 시간도 뺀다`() {
         val result = SlackCalculator.calculate(
             input(now = "2026-12-03T05:51:00Z", drive = 29.minutes, walk = 5.minutes, stopover = 10.minutes),
