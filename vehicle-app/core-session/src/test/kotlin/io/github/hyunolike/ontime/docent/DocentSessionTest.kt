@@ -94,4 +94,42 @@ class DocentSessionTest {
         // 대릉원에서 거절했으므로 첨성대에서 다시 한 번 물을 수 있다.
         assertEquals(2, speech.spoken.value.count { it == "들러 볼까요?" })
     }
+
+    @Test
+    fun `묻는 동안 화면에서 지나가기를 누르면 음성 답을 기다리지 않는다`() = runTest {
+        val speech = ScriptedSpeech(answer = true, answerDelay = 4.seconds, sayDelay = 3.5.seconds)
+        val player = DocentPlayer(ScenarioGyeongju.scenario)
+        val session = DocentSession(player, player, player, speech, player, player)
+        backgroundScope.launch { session.run() }
+        // 묻기 시작하면 곧바로 화면에서 거절한다.
+        backgroundScope.launch { session.state.collect { if (it?.narration?.phase == NarrationPhase.ASKING) session.answer(false) } }
+        launch { player.run() }
+        advanceUntilIdle()
+        runCurrent()
+
+        val last = session.state.value!!
+        assertNull(last.waypoint)
+        assertTrue(last.stamps.isEmpty())
+    }
+
+    @Test
+    fun `출발 전에 여기로 안내를 고르면 묻지 않고 그곳에 들른다`() = runTest {
+        val speech = ScriptedSpeech(answer = false, answerDelay = 4.seconds, sayDelay = 3.5.seconds)
+        val player = DocentPlayer(ScenarioGyeongju.scenario)
+        val session = DocentSession(player, player, player, speech, player, player)
+        backgroundScope.launch { session.run() }
+        runCurrent()
+
+        assertTrue(session.guideTo(ScenarioGyeongju.CHEOMSEONGDAE.id))
+        // 들를 곳은 한 번에 하나다.
+        assertEquals(false, session.guideTo(ScenarioGyeongju.DAEREUNGWON.id))
+        launch { player.run() }
+        advanceUntilIdle()
+        runCurrent()
+
+        val last = session.state.value!!
+        assertEquals(listOf(ScenarioGyeongju.CHEOMSEONGDAE), last.stamps)
+        assertNull(last.heading)
+        assertEquals(0, speech.spoken.value.count { it == "들러 볼까요?" })
+    }
 }

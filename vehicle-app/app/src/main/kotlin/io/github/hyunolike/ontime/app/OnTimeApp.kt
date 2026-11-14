@@ -7,6 +7,7 @@ import io.github.hyunolike.ontime.session.OnTimeSession
 import io.github.hyunolike.ontime.session.ParkingPreview
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -71,10 +72,26 @@ class OnTimeRuntime(app: Application) {
         platform.poc?.invoke(name)
     }
 
+    private var docentDrive: Job? = null
+
+    /** 예시 드라이브를 시작하거나, 들른 곳에서 다시 출발한다. */
     fun startDocentDemo() {
         val play = docent?.play ?: return
-        if (_docentStarted.compareAndSet(expect = false, update = true)) {
-            scope.launch { play() }
+        if (docentDrive?.isActive == true) return
+        _docentStarted.value = true
+        docentDrive = scope.launch { play() }
+    }
+
+    /** "들러 볼까요?"에 화면의 버튼으로 답한다. */
+    fun answerDocent(yes: Boolean) {
+        docentSession?.answer(yes)
+    }
+
+    /** 고른 곳을 바로 경유지로 넣는다. 이미 길을 나선 뒤라면 곧바로 그곳으로 출발한다. */
+    fun guideTo(destinationId: String) {
+        val session = docentSession ?: return
+        scope.launch {
+            if (session.guideTo(destinationId) && _docentStarted.value) startDocentDemo()
         }
     }
 

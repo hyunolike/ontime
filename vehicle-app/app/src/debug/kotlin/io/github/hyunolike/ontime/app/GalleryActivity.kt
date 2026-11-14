@@ -35,6 +35,9 @@ import io.github.hyunolike.ontime.design.component.ButtonVariant
 import io.github.hyunolike.ontime.design.component.Card
 import io.github.hyunolike.ontime.design.component.Chip
 import io.github.hyunolike.ontime.design.component.Icon
+import io.github.hyunolike.ontime.design.component.JourneyRail
+import io.github.hyunolike.ontime.design.component.RailStop
+import io.github.hyunolike.ontime.design.component.StopKind
 import io.github.hyunolike.ontime.design.component.OnTimeIcon
 import io.github.hyunolike.ontime.design.component.SlackNumber
 import io.github.hyunolike.ontime.design.component.StatusBadge
@@ -76,7 +79,7 @@ private fun Gallery(dark: Boolean, onToggleTheme: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(Space.xxl),
     ) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Space.lg), verticalArrangement = Arrangement.spacedBy(Space.lg)) {
-            Text("온타임 디자인 시스템", style = type.headline)
+            Text("길벗 디자인 시스템", style = type.headline)
             Button(if (dark) "주간으로 보기" else "야간으로 보기", onToggleTheme, variant = ButtonVariant.Secondary)
         }
 
@@ -85,19 +88,21 @@ private fun Gallery(dark: Boolean, onToggleTheme: () -> Unit) {
                 listOf(
                     "background" to colors.background, "surface" to colors.surface, "surfaceRaised" to colors.surfaceRaised,
                     "outline" to colors.outline, "track" to colors.track, "textPrimary" to colors.textPrimary,
-                    "textSecondary" to colors.textSecondary, "positive" to colors.positive, "caution" to colors.caution,
-                    "critical" to colors.critical, "info" to colors.info,
+                    "textSecondary" to colors.textSecondary, "accent 이야기" to colors.accent, "route 길" to colors.route,
+                    "positive 다녀옴" to colors.positive, "caution" to colors.caution, "critical" to colors.critical,
                 ).forEach { (name, color) -> Swatch(name, color) }
             }
         }
 
         Section("글자") {
             Column(verticalArrangement = Arrangement.spacedBy(Space.sm)) {
-                Text("headline 40 · 인천공항 제1터미널", style = type.headline)
-                Text("title 30 · 주차장 비교", style = type.title)
-                Text("bodyLarge 26 · 단기주차장으로 바꾸면 12분을 아낄 수 있습니다", style = type.bodyLarge)
-                Text("body 22 · 16:40 출발 · 수속 마감 15:55", style = type.body)
-                Text("label 20 · 주행 29분 · 도보 5분", style = type.label)
+                Text("대릉원", style = type.display)
+                Text("displaySmall 76 · 국립경주박물관", style = type.displaySmall)
+                Text("headline 44 · 오늘 길 위의 이야기", style = type.headline)
+                Text("title 32 · 5분 뒤 오른쪽 창밖", style = type.title)
+                Text("bodyLarge 28 · 신라의 왕과 귀족이 잠든 무덤 스물세 기가 모여 있습니다", style = type.bodyLarge)
+                Text("body 24 · 선덕여왕 때 세운 천문 관측대입니다", style = type.body)
+                Text("label 20 · 2.9km 앞 오른쪽", style = type.label)
                 Text("caption 18 · 가장 작은 글자", style = type.caption)
             }
         }
@@ -129,8 +134,9 @@ private fun Gallery(dark: Boolean, onToggleTheme: () -> Unit) {
 
         Section("버튼") {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(Space.lg), verticalArrangement = Arrangement.spacedBy(Space.lg)) {
-                Button("안내 시작", {}, icon = OnTimeIcon.Navigation)
-                Button("주차장 바꾸기", {}, variant = ButtonVariant.Secondary, icon = OnTimeIcon.Swap)
+                Button("시연 시작", {}, icon = OnTimeIcon.Play)
+                Button("여기로 안내", {}, variant = ButtonVariant.Route, icon = OnTimeIcon.Navigation)
+                Button("지나가기", {}, variant = ButtonVariant.Secondary)
                 Button("불러오는 중", {}, loading = true)
                 Button("비활성", {}, enabled = false)
             }
@@ -139,12 +145,22 @@ private fun Gallery(dark: Boolean, onToggleTheme: () -> Unit) {
         Section("카드와 표식") {
             Column(verticalArrangement = Arrangement.spacedBy(Space.lg)) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(Space.md), verticalArrangement = Arrangement.spacedBy(Space.md)) {
-                    Chip("시연 재생", icon = OnTimeIcon.Play)
-                    Chip("안내 중", tone = Tone.Positive, icon = OnTimeIcon.Navigation)
-                    Chip("가장 여유", tone = Tone.Info)
+                    Chip("예시 데이터 재생", icon = OnTimeIcon.Play)
+                    Chip("들음", tone = Tone.Accent, icon = OnTimeIcon.Story)
+                    Chip("들르러 가는 중", tone = Tone.Info, icon = OnTimeIcon.AddStop)
+                    Chip("다녀옴", tone = Tone.Positive, icon = OnTimeIcon.Stamp)
                 }
-                Card(Modifier.fillMaxWidth(), selected = true) { Text("선택된 카드 · 단기주차장", style = type.bodyLarge) }
-                Card(Modifier.fillMaxWidth(), onClick = {}) { Text("누를 수 있는 카드 · 장기주차장", style = type.bodyLarge) }
+                JourneyRail(
+                    listOf(
+                        RailStop("대릉원", StopKind.Visited),
+                        RailStop("", StopKind.Here),
+                        RailStop("첨성대 1.2km", StopKind.Waypoint),
+                        RailStop("국립경주박물관 3.4km", StopKind.Ahead),
+                        RailStop("불국사", StopKind.Destination),
+                    ),
+                )
+                Card(Modifier.fillMaxWidth(), selected = true, accent = colors.route) { Text("선택된 카드 · 들르러 가는 곳", style = type.bodyLarge) }
+                Card(Modifier.fillMaxWidth(), onClick = {}) { Text("누를 수 있는 카드", style = type.bodyLarge) }
             }
         }
 

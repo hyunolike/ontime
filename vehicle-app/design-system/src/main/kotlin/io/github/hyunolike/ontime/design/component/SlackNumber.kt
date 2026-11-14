@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.sp
 import io.github.hyunolike.ontime.design.theme.LocalDriving
 import io.github.hyunolike.ontime.design.theme.Motion
 import io.github.hyunolike.ontime.design.theme.OnTimeTheme
@@ -31,7 +32,7 @@ fun SlackNumber(
     minutes: Int,
     tone: Tone,
     modifier: Modifier = Modifier,
-    style: TextStyle = OnTimeTheme.type.display,
+    style: TextStyle = OnTimeTheme.type.display.copy(fontSize = 190.sp, lineHeight = 190.sp),
 ) {
     val color by animateColorAsState(OnTimeTheme.colors.tone(tone), tween(Motion.emphasized), label = "tone")
     val driving = LocalDriving.current

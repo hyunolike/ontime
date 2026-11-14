@@ -93,9 +93,10 @@ class DocentPlayer(
             .map { PoiAhead(it.poi, it.atMeters - at, it.side) }
     }
 
-    /** 멈출 곳에 닿을 때까지 재생한다. */
+    /** 멈출 곳에 닿을 때까지 재생한다. 경유지에 서 있다가 다시 부르면 그 경유지를 떠나 이어서 달린다. */
     suspend fun run() {
         started.value = true
+        if (waypoint.value?.atMeters == traveled(offset.value)) waypoint.value = null
         while (traveled(offset.value) < stopAt()) {
             delay(step / speed)
             offset.value += step
@@ -107,8 +108,9 @@ class DocentPlayer(
     override suspend fun changeDestination(to: Destination): Boolean = false
 
     override suspend fun addWaypoint(to: Destination): Boolean {
-        val target = scenario.pois.find { it.poi.destination.id == to.id && it.atMeters > traveled(offset.value) }
-            ?: return false
+        val at = traveled(offset.value)
+        val target = scenario.pois.find { it.poi.destination.id == to.id && it.atMeters > at } ?: return false
+        // 닿아 있던 경유지를 새 경유지로 바꾸면 차가 다시 움직인다.
         waypoint.value = target
         return true
     }

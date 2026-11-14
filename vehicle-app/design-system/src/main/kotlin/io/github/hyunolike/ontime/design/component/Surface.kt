@@ -26,26 +26,26 @@ import io.github.hyunolike.ontime.design.theme.Space
 import io.github.hyunolike.ontime.design.theme.Tone
 
 /**
- * 내용을 묶는 면. [onClick]이 있으면 누를 수 있고, [selected]면 테두리로 강조한다.
- * 어두운 화면에서는 그림자 대신 면의 밝기로 높이를 구분한다.
+ * 내용을 묶는 면. 테두리 없이 면의 밝기로 구분하고, [selected]일 때만 테두리로 강조한다.
+ * [onClick]이 있으면 누를 수 있다.
  */
 @Composable
 fun Card(
     modifier: Modifier = Modifier,
     selected: Boolean = false,
-    accent: Color = OnTimeTheme.colors.positive,
+    accent: Color = OnTimeTheme.colors.accent,
     onClick: (() -> Unit)? = null,
     padding: PaddingValues = PaddingValues(horizontal = Space.xl, vertical = Space.lg),
     content: @Composable () -> Unit,
 ) {
     val colors = OnTimeTheme.colors
     val shape = RoundedCornerShape(Radius.lg)
-    val border by animateColorAsState(if (selected) accent else colors.outline, tween(Motion.standard), label = "border")
+    val border by animateColorAsState(if (selected) accent else Color.Transparent, tween(Motion.standard), label = "border")
     Box(
         modifier
             .clip(shape)
             .background(if (selected) colors.surfaceRaised else colors.surface)
-            .border(if (selected) 3.dp else 1.dp, border, shape)
+            .border(2.dp, border, shape)
             .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
             .padding(padding),
     ) { content() }
@@ -62,6 +62,7 @@ fun StatusBadge(text: String, tone: Tone, modifier: Modifier = Modifier, icon: O
 }
 
 fun Tone.defaultIcon(): OnTimeIcon? = when (this) {
+    Tone.Accent -> OnTimeIcon.Story
     Tone.Positive -> OnTimeIcon.Check
     Tone.Caution -> OnTimeIcon.Warning
     Tone.Critical -> OnTimeIcon.Error
@@ -69,7 +70,7 @@ fun Tone.defaultIcon(): OnTimeIcon? = when (this) {
     Tone.Neutral -> null
 }
 
-/** 보조 정보를 담는 작은 표식. 예: "시연 재생", "안내 중". */
+/** 보조 정보를 담는 작은 표식. 색을 옅게 깐 면 위에 같은 색 글자를 올린다. 예: "예시 데이터", "경유지 대릉원". */
 @Composable
 fun Chip(text: String, modifier: Modifier = Modifier, tone: Tone = Tone.Neutral, icon: OnTimeIcon? = null) {
     val colors = OnTimeTheme.colors
@@ -78,8 +79,8 @@ fun Chip(text: String, modifier: Modifier = Modifier, tone: Tone = Tone.Neutral,
     Row(
         modifier
             .clip(shape)
-            .border(1.5.dp, color, shape)
-            .padding(horizontal = Space.lg, vertical = Space.xs),
+            .background(if (tone == Tone.Neutral) colors.surfaceRaised else color.copy(alpha = 0.16f))
+            .padding(horizontal = Space.lg, vertical = Space.sm),
         horizontalArrangement = Arrangement.spacedBy(Space.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {

@@ -43,6 +43,12 @@ object Platform {
                 road = drive,
                 stories = drive,
                 play = drive::run,
+                // 위키미디어 공용의 CC0 사진. 실제 빌드에서는 한국관광공사 관광 데이터의 대표 사진으로 바꾼다.
+                photos = mapOf(
+                    ScenarioGyeongju.DAEREUNGWON.id to PlacePhoto(R.drawable.photo_daereungwon, "Bernard Gagnon, CC0"),
+                    ScenarioGyeongju.CHEOMSEONGDAE.id to PlacePhoto(R.drawable.photo_cheomseongdae, "Dudva, CC0"),
+                    ScenarioGyeongju.BULGUKSA.id to PlacePhoto(R.drawable.photo_bulguksa, "Bernard Gagnon, CC0"),
+                ),
             ),
         )
     }

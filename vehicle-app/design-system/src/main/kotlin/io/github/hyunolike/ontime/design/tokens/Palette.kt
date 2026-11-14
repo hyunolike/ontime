@@ -5,31 +5,36 @@ package io.github.hyunolike.ontime.design.tokens
  * 의미 이름으로만 쓴다. Compose에 의존하지 않아 대비 검사를 단위 테스트로 돌릴 수 있다.
  */
 object Palette {
-    // 중립색
-    const val Ink950 = 0xFF0B0F14
-    const val Ink900 = 0xFF121820
-    const val Ink850 = 0xFF18202A
-    const val Ink800 = 0xFF212B37
-    const val Ink700 = 0xFF303D4C
-    const val Ink400 = 0xFF8C99A8
-    const val Ink300 = 0xFFA9B4C0
-    const val Ink100 = 0xFFE6EBF0
-    const val Ink50 = 0xFFF4F6F8
+    // 밤길의 바탕. 푸른 기를 빼고 먹색에 가깝게 잡아 사진의 색이 먼저 보이게 한다.
+    const val Night950 = 0xFF0B0C0E
+    const val Night900 = 0xFF131519
+    const val Night850 = 0xFF1A1D22
+    const val Night800 = 0xFF23272E
+    const val Night700 = 0xFF343A43
+    const val Paper300 = 0xFFB9B4AA
+    const val Paper50 = 0xFFF6F3EC
     const val White = 0xFFFFFFFF
-    const val Slate900 = 0xFF10161D
-    const val Slate600 = 0xFF465261
-    const val Slate300 = 0xFFC3CBD4
-    const val Slate200 = 0xFFDCE2E8
 
-    // 상태색: 어두운 배경용(밝은 톤)과 밝은 배경용(짙은 톤)
-    const val Green300 = 0xFF3DDC97
-    const val Green700 = 0xFF0B7A4B
-    const val Amber300 = 0xFFFFB020
-    const val Amber800 = 0xFF8F5300
-    const val Red300 = 0xFFFF7A7A
+    // 낮의 바탕. 한지처럼 살짝 따뜻한 흰색.
+    const val Stone900 = 0xFF16181C
+    const val Stone600 = 0xFF4C5058
+    const val Stone300 = 0xFFC9C6BE
+    const val Stone200 = 0xFFE0DDD5
+
+    // 뜻이 있는 색 다섯 가지. 어두운 바탕용(300)과 밝은 바탕용(700, 800)을 짝으로 둔다.
+    /** 등불. 길벗이 이야기하고 있다는 표시. */
+    const val Gold300 = 0xFFFFC857
+    const val Gold800 = 0xFF7A4E00
+    /** 길. 경로를 바꾸는 동작. */
+    const val Sky300 = 0xFF8AB8FF
+    const val Sky700 = 0xFF1759B8
+    /** 옥. 다녀온 곳. */
+    const val Jade300 = 0xFF5EDDB0
+    const val Jade700 = 0xFF0B7A4B
+    const val Orange300 = 0xFFFFA05C
+    const val Orange800 = 0xFF8F4A00
+    const val Red300 = 0xFFFF8A80
     const val Red700 = 0xFFC62828
-    const val Blue300 = 0xFF7CB7FF
-    const val Blue700 = 0xFF1759B8
 }
 
 /** WCAG 2.x 상대 휘도와 대비율. */

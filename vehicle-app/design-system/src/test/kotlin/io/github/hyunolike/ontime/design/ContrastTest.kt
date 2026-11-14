@@ -19,17 +19,18 @@ class ContrastTest {
         val foregrounds = mapOf(
             "textPrimary" to scheme.textPrimary,
             "textSecondary" to scheme.textSecondary,
+            "accent" to scheme.accent,
+            "route" to scheme.route,
             "positive" to scheme.positive,
             "caution" to scheme.caution,
             "critical" to scheme.critical,
-            "info" to scheme.info,
         )
         for ((bgName, bg) in backgrounds) for ((fgName, fg) in foregrounds) {
             val ratio = Contrast.ratio(fg, bg)
             assertTrue(ratio >= 4.5, "$name: $fgName on $bgName = ${"%.2f".format(ratio)}")
         }
         // 상태색을 채운 버튼이나 배지 위의 글자
-        for ((accentName, accent) in listOf("positive" to scheme.positive, "caution" to scheme.caution, "critical" to scheme.critical)) {
+        for ((accentName, accent) in listOf("accent" to scheme.accent, "route" to scheme.route, "positive" to scheme.positive, "caution" to scheme.caution, "critical" to scheme.critical)) {
             val ratio = Contrast.ratio(scheme.onAccent, accent)
             assertTrue(ratio >= 4.5, "$name: onAccent on $accentName = ${"%.2f".format(ratio)}")
         }
@@ -40,6 +41,13 @@ class ContrastTest {
 
     @Test
     fun `주간 색은 대비 기준을 지킨다`() = check("light", LightRawColors)
+
+    @Test
+    fun `사진 위 글자는 막 위에서 대비 기준을 지킨다`() {
+        for (scheme in listOf(DarkRawColors, LightRawColors)) {
+            assertTrue(Contrast.ratio(scheme.onPhoto, scheme.scrim) >= 4.5)
+        }
+    }
 
     @Test
     fun `검정과 흰색의 대비율은 21이다`() {

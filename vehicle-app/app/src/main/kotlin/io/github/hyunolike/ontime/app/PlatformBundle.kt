@@ -1,5 +1,6 @@
 package io.github.hyunolike.ontime.app
 
+import androidx.annotation.DrawableRes
 import io.github.hyunolike.ontime.platform.NaviGateway
 import io.github.hyunolike.ontime.platform.RoadGateway
 import io.github.hyunolike.ontime.platform.StoryGateway
@@ -36,5 +37,10 @@ class DocentBundle(
     val speech: SpeechGateway,
     val road: RoadGateway,
     val stories: StoryGateway,
+    /** 멈출 곳까지 달린다. 서 있다가 다시 부르면 이어서 달린다. 재생이 없는 빌드에서는 null. */
     val play: (suspend () -> Unit)?,
+    /** 장소 id별 사진. 예시 빌드는 앱에 넣어 둔 사진을, 실제 빌드는 관광 데이터의 대표 사진을 쓴다. */
+    val photos: Map<String, PlacePhoto> = emptyMap(),
 )
+
+class PlacePhoto(@DrawableRes val resource: Int, val credit: String)
