@@ -41,6 +41,8 @@ class DocentBundle(
     val play: (suspend () -> Unit)?,
     /** 장소 id별 사진. 예시 빌드는 앱에 넣어 둔 사진을, 실제 빌드는 관광 데이터의 대표 사진을 쓴다. */
     val photos: Map<String, PlacePhoto> = emptyMap(),
+    /** 음성으로 묻고 답할 수 있으면 true. false면 화면에 "말해도 된다"는 안내를 내지 않는다. */
+    val voice: Boolean = false,
 )
 
 class PlacePhoto(@DrawableRes val resource: Int, val credit: String)

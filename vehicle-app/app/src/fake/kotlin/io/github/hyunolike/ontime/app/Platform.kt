@@ -39,7 +39,8 @@ object Platform {
                 time = drive,
                 navi = drive,
                 vehicle = drive,
-                speech = ScriptedSpeech(answer = true, answerDelay = 3.seconds, sayDelay = 3.5.seconds),
+                // 음성 인식이 없으므로 답은 화면의 버튼으로만 받는다. 누르지 않으면 지나간다.
+                speech = ScriptedSpeech(answer = false, answerDelay = 10.seconds, sayDelay = 3.5.seconds),
                 road = drive,
                 stories = drive,
                 play = drive::run,

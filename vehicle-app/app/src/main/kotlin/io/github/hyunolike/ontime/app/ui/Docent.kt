@@ -22,6 +22,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -65,6 +67,11 @@ private typealias Photos = Map<String, PlacePhoto>
 @Composable
 private fun Photos.painter(id: String?): Painter? = this[id]?.let { painterResource(it.resource) }
 
+/** "들르면 약 35분 더 (관람 30분 포함)" */
+private fun Poi.extraLine(): String? = extraMinutes?.let { minutes ->
+    "들르면 약 ${minutes}분 더" + (stayMinutes?.let { " (관람 ${it}분 포함)" } ?: "")
+}
+
 private fun distanceText(meters: Int): String = if (meters >= 1000) "%.1fkm".format(meters / 1000.0) else "${meters}m"
 
 @Composable
@@ -91,7 +98,7 @@ private fun DocentHeader(title: String, state: DocentState, trailing: String) {
  * 사진은 그곳이 보일 쪽에 둔다. 누를 수 있는 것은 "들러 볼까요?"에 답하는 큰 버튼 두 개뿐이다.
  */
 @Composable
-fun DocentDrivingScreen(state: DocentState, title: String, photos: Photos, onAnswer: (Boolean) -> Unit) {
+fun DocentDrivingScreen(state: DocentState, title: String, photos: Photos, voice: Boolean, onAnswer: (Boolean) -> Unit) {
     Column(
         Modifier.fillMaxSize().padding(horizontal = Size.screenPadding, vertical = Space.xxl),
         verticalArrangement = Arrangement.spacedBy(Space.xl),
@@ -100,9 +107,10 @@ fun DocentDrivingScreen(state: DocentState, title: String, photos: Photos, onAns
 
         // 장면이 바뀔 때만 한 번 겹쳐 바뀐다. 반복되는 움직임은 없다.
         val telling = state.narration
+        // 회전이 가까우면 하던 이야기가 있어도 화면부터 비운다. 길 안내가 먼저다.
         val scene = when {
-            telling != null -> "story:${telling.ahead.poi.destination.id}"
             state.quiet != null -> "quiet"
+            telling != null -> "story:${telling.ahead.poi.destination.id}"
             else -> "idle:${state.upcoming.firstOrNull()?.poi?.destination?.id}"
         }
         AnimatedContent(
@@ -111,17 +119,27 @@ fun DocentDrivingScreen(state: DocentState, title: String, photos: Photos, onAns
             transitionSpec = { fadeIn(tween(Motion.scene)) togetherWith fadeOut(tween(Motion.fast)) },
             label = "scene",
         ) { current ->
-            val narration = state.narration
-            val quiet = state.quiet
+            // 사라지는 장면은 마지막에 보여 주던 내용 그대로 사라져야 한다.
+            // 지금 상태로 다시 그리면 나가는 동안 다른 장소가 잠깐 비친다.
+            val narration = rememberLast(state.narration.takeIf { current.startsWith("story") })
+            val quiet = rememberLast(state.quiet.takeIf { current == "quiet" })
             when {
-                current.startsWith("story") && narration != null -> StoryScene(narration, photos, onAnswer)
-                current == "quiet" && quiet != null -> QuietScene(quiet, state.upcoming.firstOrNull())
-                else -> IdleScene(state, photos)
+                quiet != null -> QuietScene(quiet, state.upcoming.firstOrNull())
+                narration != null -> StoryScene(narration, photos, voice, onAnswer)
+                else -> IdleScene(state, photos, nextId = current.substringAfter("idle:", "").takeIf { it != "null" && it.isNotEmpty() })
             }
         }
 
         JourneyRail(state.railStops(short = !LocalWideLayout.current))
     }
+}
+
+/** [value]가 null이 되어도 마지막으로 있던 값을 돌려준다. */
+@Composable
+private fun <T : Any> rememberLast(value: T?): T? {
+    val last = remember { mutableStateOf(value) }
+    if (value != null) last.value = value
+    return value ?: last.value
 }
 
 /** 사진과 글을 나란히 둔다. 사진은 [side] 쪽에 온다. 폭이 좁으면 사진을 위에 둔다. */
@@ -143,7 +161,7 @@ private fun SideBySide(side: Side, photo: @Composable (Modifier) -> Unit, text: 
 
 /** 지금 들려주는 이야기. */
 @Composable
-private fun StoryScene(narration: Narration, photos: Photos, onAnswer: (Boolean) -> Unit) {
+private fun StoryScene(narration: Narration, photos: Photos, voice: Boolean, onAnswer: (Boolean) -> Unit) {
     val ahead = narration.ahead
     val name = ahead.poi.destination.name
     val colors = OnTimeTheme.colors
@@ -165,9 +183,14 @@ private fun StoryScene(narration: Narration, photos: Photos, onAnswer: (Boolean)
             // 해설은 음성으로 나간다. 화면에는 동승자가 읽을 수 있게 세 줄까지만 둔다.
             NarrationPhase.TELLING -> Text(ahead.poi.story, style = type.bodyLarge, color = colors.textSecondary, maxLines = 3)
             NarrationPhase.ASKING -> {
+                // 들를지 정하는 데 필요한 것만: 가면 무엇을 하는지, 도착이 얼마나 늦어지는지.
                 Row(horizontalArrangement = Arrangement.spacedBy(Space.md), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(OnTimeIcon.Mic, tint = colors.route)
-                    Text("들러 볼까요? \"들를래\"라고 말해도 됩니다", style = type.bodyLarge, maxLines = 2)
+                    if (voice) Icon(OnTimeIcon.Mic, tint = colors.route)
+                    Text(if (voice) "들러 볼까요? \"들를래\"라고 말해도 됩니다" else "들러 볼까요?", style = type.title, maxLines = 2)
+                }
+                Column {
+                    if (ahead.poi.highlight.isNotEmpty()) Text(ahead.poi.highlight, style = type.bodyLarge, maxLines = 1)
+                    ahead.poi.extraLine()?.let { Text(it, style = type.bodyLarge, color = colors.textSecondary, maxLines = 1) }
                 }
                 Row(Modifier.fillMaxWidth().padding(top = Space.sm), horizontalArrangement = Arrangement.spacedBy(Space.lg)) {
                     Button("들르기", { onAnswer(true) }, Modifier.weight(1.3f), variant = ButtonVariant.Route, icon = OnTimeIcon.AddStop)
@@ -204,10 +227,10 @@ private fun QuietScene(maneuver: Maneuver, next: PoiAhead?) {
 
 /** 이야기와 이야기 사이. 다음에 나올 곳을 조용히 예고한다. */
 @Composable
-private fun IdleScene(state: DocentState, photos: Photos) {
+private fun IdleScene(state: DocentState, photos: Photos, nextId: String?) {
     val colors = OnTimeTheme.colors
     val type = OnTimeTheme.type
-    val next = state.upcoming.firstOrNull()
+    val next = state.ahead.find { it.poi.destination.id == nextId }
     val heading = state.heading
     val place = next?.poi?.destination ?: heading ?: state.destination
     SideBySide(
@@ -299,7 +322,7 @@ private fun PlacesPane(state: DocentState, photos: Photos, onGuide: (String) -> 
     val aheadIds = state.ahead.map { it.poi.destination.id }.toSet()
     val passed = state.told.filter { it.destination.id !in aheadIds }
     Column(verticalArrangement = Arrangement.spacedBy(Space.lg)) {
-        Text("오늘 길 위의 이야기", style = OnTimeTheme.type.headline, maxLines = 1)
+        Text("${state.destination.name} 가는 길, 이야기 ${passed.size + state.ahead.size}곳", style = OnTimeTheme.type.headline, maxLines = 1)
         passed.forEach { PlaceRow(it, null, state, photos, onGuide) }
         state.ahead.forEach { PlaceRow(it.poi, it, state, photos, onGuide) }
         Card(Modifier.fillMaxWidth(), padding = PaddingValues(Space.md)) {
@@ -347,8 +370,12 @@ private fun PlaceRow(poi: Poi, ahead: PoiAhead?, state: DocentState, photos: Pho
                     color = colors.textSecondary,
                     maxLines = 1,
                 )
-                // 아직 듣지 않은 이야기는 미리 보여 주지 않는다. 길에서 듣는 재미를 남겨 둔다.
-                if (told && !canGuide) Text(poi.story, style = type.body, color = colors.textSecondary, maxLines = 2)
+                // 해설은 미리 보여 주지 않고 길에서 듣게 둔다. 들를지 정하는 데 필요한 한 줄만 보여 준다.
+                if (!visited) {
+                    if (poi.highlight.isNotEmpty()) Text(poi.highlight, style = type.body, maxLines = 1)
+                    poi.extraLine()?.let { Text(it, style = type.label, color = colors.textSecondary, maxLines = 1) }
+                }
+                if (visited && poi.highlight.isNotEmpty()) Text("여기서 할 일: ${poi.highlight}", style = type.body, maxLines = 2)
                 if (canGuide) {
                     Button(
                         "여기로 안내",
@@ -394,14 +421,14 @@ private fun TripPane(state: DocentState, photos: Photos, started: Boolean, onDri
 
         if (onDrive != null && !finished) {
             when {
-                !started -> Button("시연 시작", onDrive, Modifier.fillMaxWidth(), icon = OnTimeIcon.Play)
+                !started -> Button("경주 코스 시연 시작", onDrive, Modifier.fillMaxWidth(), icon = OnTimeIcon.Play)
                 state.heading == null ->
                     Button("${state.destination.name.withEuro()} 계속 안내", onDrive, Modifier.fillMaxWidth(), variant = ButtonVariant.Route, icon = OnTimeIcon.Navigation)
             }
         }
         if (state.source == Source.REPLAY) {
             Text(
-                "거리와 해설은 예시 데이터이고 음성은 화면 자막으로 대신합니다. 사진은 위키미디어 공용의 CC0 사진입니다.",
+                "예시 경로를 재생합니다. 거리와 해설, 들르는 데 드는 시간은 예시 값이고 해설은 화면 자막으로 보여 드립니다. 사진은 위키미디어 공용의 CC0 사진입니다.",
                 style = type.caption,
                 color = colors.textSecondary,
             )

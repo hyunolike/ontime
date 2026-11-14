@@ -19,8 +19,8 @@ adb shell am start -n io.github.hyunolike.ontime/io.github.hyunolike.ontime.app.
 1. **화면의 좌우는 창밖의 좌우와 같습니다.** 오른쪽 창밖에 보일 곳은 사진을 화면 오른쪽에 두고, 바깥쪽 가장자리에 등불색 띠와 화살표를 붙입니다. 글을 읽지 않아도 어느 쪽을 볼지 알 수 있습니다.
 2. **색은 세 가지 뜻만 가집니다.** 등불색은 길벗이 이야기하는 중, 하늘색은 경로를 바꾸는 동작, 옥색은 다녀온 곳입니다. 꾸미려고 색을 쓰지 않습니다.
 3. **주행 중에는 한 장면에 사진 한 장, 이름 하나.** 사진은 움직이지 않고 넘겨 볼 수도 없습니다. 해설은 귀로 듣는 것이고 화면의 문장은 동승자를 위한 세 줄까지입니다.
-4. **주행 중에 누를 수 있는 것은 물음에 답하는 버튼 두 개뿐입니다.** "들러 볼까요?"라고 물을 때만 나타나고, 높이는 104dp입니다. 말로 답해도 되고, 답하지 않으면 그대로 지나갑니다. 목록에서 고르는 일은 정차 중에만 합니다.
-5. **길 안내가 먼저입니다.** 회전이 가까우면 사진까지 내리고 화면을 비웁니다.
+4. **주행 중에 누를 수 있는 것은 물음에 답하는 버튼 두 개뿐입니다.** "들러 볼까요?"라고 물을 때만 나타나고, 높이는 104dp입니다. 버튼 위에는 들를지 정하는 데 필요한 두 줄(가서 할 일, 늦어지는 시간)만 둡니다. 답하지 않으면 그대로 지나갑니다. 목록에서 고르는 일은 정차 중에만 합니다.
+5. **길 안내가 먼저입니다.** 회전이 가까우면 사진까지 내리고 화면을 비웁니다. 묻고 있던 질문도 닫습니다.
 6. **예시 데이터는 표시합니다.** 예시 값이 섞이면 "예시 데이터 재생" 표식을 항상 같은 자리에 둡니다.
 
 ## 기준으로 삼은 것
@@ -106,10 +106,10 @@ adb shell am start -n io.github.hyunolike.ontime/io.github.hyunolike.ontime.app.
 
 ## 화면 패턴
 
-- **주행, 이야기 중**: 사진을 그곳이 보일 쪽에 두고 반대쪽에 "5분 뒤 오른쪽 창밖", 이름, 해설 세 줄을 둡니다. 물을 때는 해설 자리에 "들르기"와 "지나가기" 버튼이 들어옵니다.
+- **주행, 이야기 중**: 사진을 그곳이 보일 쪽에 두고 반대쪽에 "5분 뒤 오른쪽 창밖", 이름, 해설 세 줄을 둡니다. 물을 때는 해설 자리에 가서 할 일과 늦어지는 시간, 그리고 "들르기"와 "지나가기" 버튼이 들어옵니다.
 - **주행, 쉼**: 회전 400m 앞에서는 사진을 내리고 "잠시 쉽니다"와 회전까지의 거리만 둡니다.
 - **주행, 이야기 사이**: 다음에 나올 곳이나 들르러 가는 곳을 한 단계 작은 글자로 예고합니다.
-- **정차**: 왼쪽은 오늘 길 위의 장소 목록이고, 아직 앞에 있는 곳에는 "여기로 안내" 버튼이 붙습니다. 오른쪽은 목적지나 도착한 곳의 사진, 방문 도장, 출발 버튼입니다. 아직 듣지 않은 이야기의 해설은 미리 보여 주지 않습니다.
+- **정차**: 왼쪽은 오늘 길 위의 장소 목록이고, 아직 앞에 있는 곳에는 "여기로 안내" 버튼이 붙습니다. 오른쪽은 목적지나 도착한 곳의 사진, 방문 도장, 출발 버튼입니다. 해설은 미리 보여 주지 않고, 가서 할 일 한 줄과 늦어지는 시간만 보여 줍니다.
 - 어느 화면에서나 맨 위에는 일정 한 줄, 주행 화면 맨 아래에는 여정 선을 둡니다.
 
 ## 사진을 쓰는 규칙
@@ -117,7 +117,7 @@ adb shell am start -n io.github.hyunolike.ontime/io.github.hyunolike.ontime.app.
 - 주행 중에는 한 장면에 정지 사진 한 장만 씁니다. 넘겨 보기, 확대, 자동 전환은 두지 않습니다.
 - 사진 위에는 창밖 방향 표시 말고는 글자를 올리지 않습니다. 주행 중 읽는 글자는 바탕색 위에 둡니다.
 - 정차 화면의 큰 사진 위에 이름을 올릴 때는 `scrim`을 깔고 `onPhoto` 색으로 씁니다.
-- 지금 들어 있는 사진 3장은 위키미디어 공용의 CC0 사진입니다. 실제 데이터를 붙일 때는 한국관광공사 관광 데이터의 대표 사진으로 바꾸고, 사진마다 이용 조건을 확인해 출처를 정차 화면에 적습니다.
+- 지금 들어 있는 사진 3장은 위키미디어 공용의 CC0 사진입니다(2026-11-14에 공용 API의 라이선스 항목으로 확인). 실제 데이터를 붙일 때는 한국관광공사 관광 데이터의 대표 사진으로 바꾸고, 사진마다 이용 조건을 확인해 출처를 정차 화면에 적습니다.
 
 ## 가이드에 수치가 없어 직접 정한 것
 
@@ -137,6 +137,6 @@ adb shell am start -n io.github.hyunolike.ontime/io.github.hyunolike.ontime.app.
 | 아이콘 16종 | Google Material Symbols Rounded | Apache License 2.0 |
 | 도슨트 아이콘 7종 (좌우 창밖, 이야기, 쉼, 도장, 경유지, 길) | Codex로 만든 벡터 | 자체 제작 |
 | 앱 아이콘 | Codex로 만든 벡터 | 자체 제작 |
-| 대릉원 사진 (`Daereungwon Tomb Complex.jpg`) | Wikimedia Commons, Bernard Gagnon | CC0 1.0 |
-| 첨성대 사진 (`Cheomseongdae astronomical observatory.jpg`) | Wikimedia Commons, Dudva | CC0 1.0 |
-| 불국사 사진 (`Daeungjeon, Bulguksa 01.jpg`) | Wikimedia Commons, Bernard Gagnon | CC0 1.0 |
+| 대릉원 사진 ([Daereungwon Tomb Complex.jpg](https://commons.wikimedia.org/wiki/File:Daereungwon_Tomb_Complex.jpg)) | Wikimedia Commons, Bernard Gagnon | CC0 1.0 |
+| 첨성대 사진 ([Cheomseongdae astronomical observatory.jpg](https://commons.wikimedia.org/wiki/File:Cheomseongdae_astronomical_observatory.jpg)) | Wikimedia Commons, Dudva | CC0 1.0 |
+| 불국사 사진 ([Daeungjeon, Bulguksa 01.jpg](https://commons.wikimedia.org/wiki/File:Daeungjeon,_Bulguksa_01.jpg)) | Wikimedia Commons, Bernard Gagnon | CC0 1.0 |

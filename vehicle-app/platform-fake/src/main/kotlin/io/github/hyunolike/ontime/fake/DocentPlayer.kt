@@ -122,7 +122,8 @@ class DocentPlayer(
 
 /**
  * 경주 시내를 지나 불국사로 가는 길. 대릉원과 첨성대를 차례로 지난다.
- * 거리와 방향, 속도는 설명용 예시이고, 해설은 널리 알려진 사실을 짧게 줄인 예시 문장이다.
+ * 거리와 방향, 속도, 들르는 데 드는 시간은 설명용 예시이고, 해설은 널리 알려진 사실을 짧게 줄인 예시 문장이다.
+ * 해설은 창밖으로 보이는 모습부터 말하고, 내려서 할 수 있는 일을 하나 붙인다.
  */
 object ScenarioGyeongju {
     val BULGUKSA = Destination("gyeongju-bulguksa", "불국사", 35.7900, 129.3320, "경북 경주시 불국로 385")
@@ -131,15 +132,21 @@ object ScenarioGyeongju {
 
     val daereungwon = Poi(
         DAEREUNGWON,
-        "신라의 왕과 귀족이 잠든 무덤 스물세 기가 모여 있습니다. 천마도가 나온 천마총이 이 안에 있습니다.",
+        "저 둥근 언덕들은 신라 시대 무덤이에요. 그중 천마총은 봉분 안을 볼 수 있어요. 천마도가 발견된 곳이죠.",
         canStop = true,
         source = Source.REPLAY,
+        highlight = "천마총 안 둘러보기",
+        stayMinutes = 30,
+        extraMinutes = 35,
     )
     val cheomseongdae = Poi(
         CHEOMSEONGDAE,
-        "선덕여왕 때 세운 천문 관측대입니다. 천삼백 년 넘게 같은 자리에 서 있습니다.",
+        "둥근 돌탑 한가운데 네모난 창이 나 있어요. 신라 선덕여왕 때 세운 것으로 전해져요. 별을 살피던 곳으로 알려져 있죠.",
         canStop = true,
         source = Source.REPLAY,
+        highlight = "돌탑의 네모난 창 찾아보기",
+        stayMinutes = 15,
+        extraMinutes = 20,
     )
 
     val scenario = DocentScenario(

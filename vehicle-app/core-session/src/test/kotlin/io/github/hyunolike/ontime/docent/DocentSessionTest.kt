@@ -19,10 +19,8 @@ import kotlinx.coroutines.test.runTest
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DocentSessionTest {
-    private val daereungwonStory =
-        "5분 뒤 오른쪽에 대릉원. 신라의 왕과 귀족이 잠든 무덤 스물세 기가 모여 있습니다. 천마도가 나온 천마총이 이 안에 있습니다."
-    private val cheomseongdaeStory =
-        "4분 뒤 왼쪽에 첨성대. 선덕여왕 때 세운 천문 관측대입니다. 천삼백 년 넘게 같은 자리에 서 있습니다."
+    private val daereungwonStory = "5분 뒤 오른쪽에 대릉원. ${ScenarioGyeongju.daereungwon.story}"
+    private val cheomseongdaeStory = "4분 뒤 왼쪽에 첨성대. ${ScenarioGyeongju.cheomseongdae.story}"
 
     private fun TestScope.drive(speech: ScriptedSpeech): Pair<List<DocentState>, DocentPlayer> {
         val player = DocentPlayer(ScenarioGyeongju.scenario)
@@ -131,5 +129,18 @@ class DocentSessionTest {
         assertEquals(listOf(ScenarioGyeongju.CHEOMSEONGDAE), last.stamps)
         assertNull(last.heading)
         assertEquals(0, speech.spoken.value.count { it == "들러 볼까요?" })
+    }
+
+    @Test
+    fun `묻는 중에 회전이 가까워지면 질문을 닫고 경유지를 넣지 않는다`() = runTest {
+        // 답이 아주 늦게 오는 경우. 대릉원을 묻는 동안 우회전 400m 앞에 들어선다.
+        val speech = ScriptedSpeech(answer = true, answerDelay = 20.seconds, sayDelay = 3.5.seconds)
+        val (states, _) = drive(speech)
+
+        // 물었던 것은 맞고, 회전 구간에 들어선 뒤로는 묻는 상태가 남아 있지 않다.
+        assertTrue(states.any { it.narration?.phase == NarrationPhase.ASKING && it.narration?.ahead?.poi == ScenarioGyeongju.daereungwon })
+        assertTrue(states.filter { it.quiet != null }.drop(1).none { it.narration?.phase == NarrationPhase.ASKING })
+        assertTrue(states.none { it.waypoint == ScenarioGyeongju.DAEREUNGWON })
+        assertTrue(speech.spoken.value.none { it.startsWith("대릉원을 경유지로") })
     }
 }

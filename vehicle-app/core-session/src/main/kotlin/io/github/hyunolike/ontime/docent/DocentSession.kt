@@ -17,6 +17,7 @@ import java.time.Instant
 import kotlin.math.ceil
 import kotlin.time.Duration
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -83,6 +84,7 @@ class DocentSession(
     private val toldIds = mutableSetOf<String>()
     private var narrating: Job? = null
     private var touched: CompletableDeferred<Boolean>? = null
+    private var closedByTurn = false
 
     private val _state = MutableStateFlow<DocentState?>(null)
     val state: StateFlow<DocentState?> = _state
@@ -113,12 +115,20 @@ class DocentSession(
                     source = input.ahead.firstOrNull()?.poi?.source ?: input.source,
                 )
             }
+            // 묻는 중에 회전이 가까워지면 질문을 닫는다. 회전 직전에 경로 선택을 재촉하지 않는다.
+            if (quiet != null) {
+                touched?.let {
+                    closedByTurn = true
+                    it.complete(false)
+                }
+            }
             if (!input.driving || quiet != null || narrating?.isActive == true) return@collect
             val next = input.ahead.firstOrNull {
                 it.poi.destination.id !in toldIds && it.distanceMeters in tooLate..announceWithin
             } ?: return@collect
             toldIds += next.poi.destination.id
-            narrating = launch { narrate(next) }
+            // 곧바로 시작해 이야기 화면을 띄운다. 늦게 시작하면 그 사이에 다음 곳의 예고가 잠깐 비친다.
+            narrating = launch(start = CoroutineStart.UNDISPATCHED) { narrate(next) }
         }
     }
 
@@ -135,7 +145,8 @@ class DocentSession(
         speech.say(text)
 
         // 들를 곳은 한 번에 하나만 둔다. 이미 정했으면 묻지 않는다.
-        if (poi.canStop && _state.value?.heading == null) {
+        if (poi.canStop && _state.value?.heading == null && _state.value?.quiet == null) {
+            closedByTurn = false
             val question = "들러 볼까요?"
             setNarration(Narration(ahead, NarrationPhase.ASKING, question, lead))
             if (askByVoiceOrTouch(question) && navi.addWaypoint(poi.destination)) {
@@ -144,13 +155,14 @@ class DocentSession(
                 setNarration(Narration(ahead, NarrationPhase.ADDED, result, lead))
                 speech.say(result)
             } else {
-                setNarration(Narration(ahead, NarrationPhase.SKIPPED, "그대로 지나갑니다", lead))
+                val passing = if (closedByTurn) "회전이 가까워 그대로 지나갑니다" else "그대로 지나갑니다"
+                setNarration(Narration(ahead, NarrationPhase.SKIPPED, passing, lead))
             }
         }
         setNarration(null)
     }
 
-    /** 말로 답하거나 화면의 버튼을 누르거나, 먼저 온 쪽을 답으로 삼는다. */
+    /** 말로 답하거나 화면의 버튼을 누르거나, 먼저 온 쪽을 답으로 삼는다. 답이 없으면 지나간다. */
     private suspend fun askByVoiceOrTouch(question: String): Boolean = coroutineScope {
         val touch = CompletableDeferred<Boolean>().also { touched = it }
         val voice = async { speech.askYesNo(question) }

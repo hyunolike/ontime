@@ -10,7 +10,21 @@ enum class Side { LEFT, RIGHT }
  * 이야기가 있는 곳 하나. [story]는 운전 중 듣기 좋게 두세 문장으로 줄인 해설이다.
  * [source]가 REPLAY면 실제 관광 데이터가 아니라 예시로 넣은 해설이다.
  */
-data class Poi(val destination: Destination, val story: String, val canStop: Boolean, val source: Source)
+data class Poi(
+    val destination: Destination,
+    val story: String,
+    val canStop: Boolean,
+    val source: Source,
+    /** 들르면 무엇을 하게 되는지 한 줄. 들를지 정할 때 보여 준다. */
+    val highlight: String = "",
+    /** 둘러보는 데 드는 시간(분). */
+    val stayMinutes: Int? = null,
+    /**
+     * 들르면 목적지 도착이 늦어지는 시간(분). 둘러보는 시간을 포함한다.
+     * 실제 구현은 내비의 소요 시간 조회로 얻은 우회 시간에 [stayMinutes]를 더한다.
+     */
+    val extraMinutes: Int? = null,
+)
 
 /** 앞으로 지나갈 곳. 경로를 따라 남은 거리와, 그곳이 보일 쪽. */
 data class PoiAhead(val poi: Poi, val distanceMeters: Int, val side: Side)
