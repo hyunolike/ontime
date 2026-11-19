@@ -47,6 +47,19 @@ API Reference 페이지는 스크립트로 그려져 본문을 읽지 못했습�
 - 내비 출발 위치는 성남 판교 부근으로 잡혀 있다. 위치를 옮기는 방법은 아직 확인하지 못했다.
 - **에뮬레이터의 기본 시간대는 `America/Los_Angeles`다.** 내비는 기기 시간대로 도착 예정 시각을 보여 주고 온타임은 한국 시간으로 보여 줘서 둘이 어긋난다. `-timezone Asia/Seoul`로 띄우거나, 켜진 상태에서 `adb shell service call alarm 3 s16 Asia/Seoul`로 바꾼다.
 
+### 위치 주입과 경유지 해제 (2026-11-20)
+
+| 항목 | 결과 |
+|---|---|
+| 내비의 차 위치 | `onCurrentLocationInfo`가 lat=37.4127212, lon=127.094681(성남 수정구 시흥동)로 고정이다. 경로를 잡아도 움직이지 않으므로 `remainTime`과 회전 목록도 바뀌지 않는다 |
+| `adb emu geo fix` | Android 위치 서비스(`dumpsys location`)까지는 들어간다. 내비는 위치를 NMEA 문장으로 받는데, 에뮬레이터가 만드는 문장의 체크섬이 늘 `*47`이라 `NMEA checksum mismatch`로 버린다. 체크섬을 맞춘 문장을 `geo nmea`로 넣어도 같은 경로로 다시 만들어져 결과가 같다 |
+| 모의주행 | 내비 설정(버전 3.3.2-rc5-hotfix.3)에 없다 |
+| 기어 주입 | `cmd car_service inject-vhal-event`는 `requires non-user build`로 막힌다 |
+| `removeWaypoint(FIRST)` | 성공. 약 6초 뒤 `onWaypointChanged`가 `cmdType=REMOVE`와 원래 목적지까지의 `duration`, `distance`를 준다 |
+| 경로 재요청과 경유지 | 같은 목적지로 안내 중일 때 `requestRoute`를 다시 부르고 곧바로 `addWaypoint`를 부르면, 내비가 경로를 새로 잡으며 경유지를 버린다(`onWayPointInfo (없음)`). 이미 안내 중이면 다시 요청하지 않고 `addWaypoint`만 부르면 들어간다 |
+
+그래서 도슨트의 `pleos` 빌드는 위치를 OpenStreetMap 경로로 재생하고, 경로와 경유지만 실제 내비에 보낸다. 설계는 [live-docent](features/live-docent/design.md)에 있다.
+
 ### 내비와 나란히 띄우기 (2026-11-14)
 
 ![내비와 나란히 띄운 화면](screenshots/8-sdk-check.png)
@@ -56,7 +69,7 @@ API Reference 페이지는 스크립트로 그려져 본문을 읽지 못했습�
 - 나뉜 상태에서 `requestRoute()`를 부르면 내비가 자기 칸에서 경로를 잡고 온타임은 그대로 보인다. 내비 화면의 1시간 12분과 `remainTime=4320`이 같았다.
 - Android의 `FLAG_ACTIVITY_LAUNCH_ADJACENT`로 내비를 열어서는 나뉘지 않았다. 앱이 스스로 화면을 나누는 방법은 찾지 못했다.
 
-아직 확인하지 못한 것: 주행 중 FusedLocation의 위치 갱신과 근접 알림, 앱이 스스로 화면을 나누는 방법, 주행 중 `remainTime`이 줄어드는지, 기어를 D로 바꿨을 때의 화면 전환, STT, TTS 서버 모드, 주행가능거리.
+아직 확인하지 못한 것: 주행 중 FusedLocation의 위치 갱신과 근접 알림(에뮬레이터에서는 위치를 움직일 방법이 없다), 앱이 스스로 화면을 나누는 방법, 주행 중 `remainTime`이 줄어드는지, 기어를 D로 바꿨을 때의 화면 전환, STT, TTS 서버 모드, 주행가능거리.
 
 ## SDK 파일에서 확인한 것 (2026-11-13)
 

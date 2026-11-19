@@ -40,11 +40,10 @@ class MainActivity : ComponentActivity() {
                     when {
                         // 도슨트가 있으면 도슨트가 앱의 본 화면이다.
                         docent != null && tour != null && tour.driving ->
-                            DocentDrivingScreen(tour, docent.title, docent.photos, docent.voice, runtime::answerDocent)
+                            DocentDrivingScreen(tour, docent, runtime::answerDocent)
                         docent != null && tour != null -> DocentStoppedScreen(
                             state = tour,
-                            title = docent.title,
-                            photos = docent.photos,
+                            docent = docent,
                             started = docentStarted,
                             onDrive = if (docent.play != null) runtime::startDocentDemo else null,
                             onGuide = runtime::guideTo,

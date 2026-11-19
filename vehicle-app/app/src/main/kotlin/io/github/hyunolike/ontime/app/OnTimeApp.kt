@@ -47,7 +47,7 @@ class OnTimeRuntime(app: Application) {
     val choosing: StateFlow<String?> = _choosing
 
     val docent = platform.docent
-    private val docentSession = docent?.let { DocentSession(it.time, it.navi, it.vehicle, it.speech, it.road, it.stories) }
+    private val docentSession = docent?.let { DocentSession(it.time, it.navi, it.vehicle, it.speech, it.road, it.stories, quietWithin = it.quietWithin) }
     val docentState: StateFlow<DocentState?> = docentSession?.state ?: MutableStateFlow(null)
 
     private val _docentStarted = MutableStateFlow(false)
