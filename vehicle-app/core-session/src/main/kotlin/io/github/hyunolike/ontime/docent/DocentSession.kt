@@ -122,9 +122,18 @@ class DocentSession(
                     it.complete(false)
                 }
             }
+            // 이야기 도중에 차를 세우면 멈춘다. 정차 화면에는 이야기가 보이지 않으므로, 다시 출발하면 그곳을 처음부터 들려준다.
+            if (!input.driving && narrating?.isActive == true) {
+                narrating?.cancel()
+                narrating = null
+                _state.value?.narration?.ahead?.poi?.let { poi ->
+                    toldIds -= poi.destination.id
+                    _state.update { it?.copy(narration = null, told = it.told - poi) }
+                }
+            }
             if (!input.driving || quiet != null || narrating?.isActive == true) return@collect
             val next = input.ahead.firstOrNull {
-                it.poi.destination.id !in toldIds && it.distanceMeters in tooLate..announceWithin
+                it.poi.destination.id !in toldIds && it.settled && it.distanceMeters in tooLate..announceWithin
             } ?: return@collect
             toldIds += next.poi.destination.id
             // 곧바로 시작해 이야기 화면을 띄운다. 늦게 시작하면 그 사이에 다음 곳의 예고가 잠깐 비친다.

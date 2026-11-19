@@ -89,7 +89,7 @@ class PleosNavi(
         }
 
         override fun onTBTInfo(tbtInfo: List<TBTInfo>) {
-            PleosLog.event("onTBTInfo", tbtInfo.take(3).joinToString { "${it.type} ${it.distance} ${it.description}" }.ifEmpty { "(없음)" })
+            PleosLog.event("onTBTInfo", tbtInfo.take(30).joinToString { "${it.type} ${it.distance} ${it.description}" }.ifEmpty { "(없음)" })
             _maneuver.tryEmit(tbtInfo.firstOrNull()?.let { Maneuver(it.distance.toInt(), it.description.orEmpty().ifEmpty { it.type.name }) })
         }
 
@@ -179,6 +179,12 @@ class PleosNavi(
                 ),
             )
         }.onFailure { PleosLog.error("addWaypoint", it) }.isSuccess
+    }
+
+    override suspend fun removeWaypoint(): Boolean {
+        PleosLog.call("removeWaypoint", "FIRST")
+        return runCatching { helper.removeWaypoint(WaypointIndex.FIRST) }
+            .onFailure { PleosLog.error("removeWaypoint", it) }.isSuccess
     }
 
     override suspend fun changeDestination(to: Destination): Boolean {

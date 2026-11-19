@@ -34,6 +34,9 @@ interface NaviGateway {
 
     /** 목적지는 그대로 두고 [to]를 경유지로 넣는다. 지원하지 않으면 false. */
     suspend fun addWaypoint(to: Destination): Boolean = false
+
+    /** 넣어 둔 첫 경유지를 지운다. 지원하지 않으면 false. */
+    suspend fun removeWaypoint(): Boolean = false
 }
 
 interface VehicleGateway {

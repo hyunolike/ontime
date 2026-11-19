@@ -43,6 +43,17 @@ class DocentBundle(
     val photos: Map<String, PlacePhoto> = emptyMap(),
     /** 음성으로 묻고 답할 수 있으면 true. false면 화면에 "말해도 된다"는 안내를 내지 않는다. */
     val voice: Boolean = false,
+    /** 재생 값을 쓰고 있다는 표시. 넓은 화면과 좁은 화면용. */
+    val replayChip: String = "예시 데이터 재생",
+    val replayChipShort: String = "예시 데이터",
+    /** 정차 화면 아래에 적는, 무엇이 실제 값이고 무엇이 예시인지에 대한 설명. */
+    val replayNote: String = "예시 경로를 재생합니다. 거리와 해설, 들르는 데 드는 시간은 예시 값이고 해설은 화면 자막으로 보여 드립니다.",
+    /** 출발 전 정차 화면의 출발 버튼. */
+    val driveLabel: String = "경주 코스 시연 시작",
+    /** 거리가 직선 거리면 true. 출발 전에는 진행 방향을 몰라 정차 화면에 쪽을 적지 않는다. */
+    val straightLine: Boolean = false,
+    /** 회전이 이 거리 안이면 새 이야기를 꺼내지 않는다. 직선 거리로 쪽을 정하는 빌드는 회전 뒤 쪽이 뒤집힐 수 있어 넓게 둔다. */
+    val quietWithin: Int = 400,
 )
 
 class PlacePhoto(@DrawableRes val resource: Int, val credit: String)

@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.map
 /** 경로의 몇 미터 지점에, 어느 쪽에 무엇이 있는지. */
 data class RoutePoi(val poi: Poi, val atMeters: Int, val side: Side)
 
-data class RouteManeuver(val atMeters: Int, val instruction: String)
+data class RouteManeuver(val atMeters: Int, val instruction: String, val turn: Side? = null)
 
 /** 일정한 속도로 한 길을 달리는 드라이브. 값은 모두 설명용 예시다. */
 data class DocentScenario(

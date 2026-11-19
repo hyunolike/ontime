@@ -72,6 +72,8 @@ dependencies {
     implementation(project(":design-system"))
     "fakeImplementation"(project(":platform-fake"))
     "pleosImplementation"(project(":platform-pleos"))
+    // pleos 빌드도 위치는 재생한다. 에뮬레이터의 내비 차가 움직이지 않아서다(docs/features/live-docent).
+    "pleosImplementation"(project(":platform-fake"))
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)

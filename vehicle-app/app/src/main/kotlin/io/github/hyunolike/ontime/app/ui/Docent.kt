@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import io.github.hyunolike.ontime.app.DocentBundle
 import io.github.hyunolike.ontime.app.PlacePhoto
 import io.github.hyunolike.ontime.design.component.Button
 import io.github.hyunolike.ontime.design.component.ButtonVariant
@@ -67,6 +70,23 @@ private typealias Photos = Map<String, PlacePhoto>
 @Composable
 private fun Photos.painter(id: String?): Painter? = this[id]?.let { painterResource(it.resource) }
 
+/** 큰 사진의 오른쪽 위에 저작자와 이용 조건을 작게 적는다. 작은 사진에는 붙이지 않는다. */
+@Composable
+private fun BoxScope.Credit(photos: Photos, id: String?) {
+    val credit = photos[id]?.credit ?: return
+    Text(
+        "사진 $credit",
+        modifier = Modifier
+            .align(Alignment.TopEnd)
+            .padding(Space.sm)
+            .background(OnTimeTheme.colors.scrim.copy(alpha = 0.6f), RoundedCornerShape(Radius.sm))
+            .padding(horizontal = Space.sm, vertical = Space.xs),
+        style = OnTimeTheme.type.caption,
+        color = OnTimeTheme.colors.onPhoto,
+        maxLines = 1,
+    )
+}
+
 /** "들르면 약 35분 더 (관람 30분 포함)" */
 private fun Poi.extraLine(): String? = extraMinutes?.let { minutes ->
     "들르면 약 ${minutes}분 더" + (stayMinutes?.let { " (관람 ${it}분 포함)" } ?: "")
@@ -75,7 +95,8 @@ private fun Poi.extraLine(): String? = extraMinutes?.let { minutes ->
 private fun distanceText(meters: Int): String = if (meters >= 1000) "%.1fkm".format(meters / 1000.0) else "${meters}m"
 
 @Composable
-private fun DocentHeader(title: String, state: DocentState, trailing: String) {
+private fun DocentHeader(docent: DocentBundle, state: DocentState, trailing: String) {
+    val title = docent.title
     val wide = LocalWideLayout.current
     val trip = "${state.destination.name}까지 ${minutesText(state.remaining)}"
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.md), verticalAlignment = Alignment.CenterVertically) {
@@ -88,7 +109,7 @@ private fun DocentHeader(title: String, state: DocentState, trailing: String) {
             maxLines = 1,
         )
         // 예시로 넣은 해설을 실제 관광 데이터처럼 보이게 두지 않는다.
-        if (state.source == Source.REPLAY) Chip(if (wide) "예시 데이터 재생" else "예시 데이터", icon = OnTimeIcon.Play)
+        if (state.source == Source.REPLAY) Chip(if (wide) docent.replayChip else docent.replayChipShort, icon = OnTimeIcon.Play)
         Text(trailing, style = OnTimeTheme.type.label, color = OnTimeTheme.colors.textSecondary, maxLines = 1)
     }
 }
@@ -98,12 +119,13 @@ private fun DocentHeader(title: String, state: DocentState, trailing: String) {
  * 사진은 그곳이 보일 쪽에 둔다. 누를 수 있는 것은 "들러 볼까요?"에 답하는 큰 버튼 두 개뿐이다.
  */
 @Composable
-fun DocentDrivingScreen(state: DocentState, title: String, photos: Photos, voice: Boolean, onAnswer: (Boolean) -> Unit) {
+fun DocentDrivingScreen(state: DocentState, docent: DocentBundle, onAnswer: (Boolean) -> Unit) {
+    val photos = docent.photos
     Column(
         Modifier.fillMaxSize().padding(horizontal = Size.screenPadding, vertical = Space.xxl),
         verticalArrangement = Arrangement.spacedBy(Space.xl),
     ) {
-        DocentHeader(title, state, "D 주행 중")
+        DocentHeader(docent, state, "D 주행 중")
 
         // 장면이 바뀔 때만 한 번 겹쳐 바뀐다. 반복되는 움직임은 없다.
         val telling = state.narration
@@ -125,8 +147,8 @@ fun DocentDrivingScreen(state: DocentState, title: String, photos: Photos, voice
             val quiet = rememberLast(state.quiet.takeIf { current == "quiet" })
             when {
                 quiet != null -> QuietScene(quiet, state.upcoming.firstOrNull())
-                narration != null -> StoryScene(narration, photos, voice, onAnswer)
-                else -> IdleScene(state, photos, nextId = current.substringAfter("idle:", "").takeIf { it != "null" && it.isNotEmpty() })
+                narration != null -> StoryScene(narration, photos, docent.voice, onAnswer)
+                else -> IdleScene(state, photos, docent.straightLine, nextId = current.substringAfter("idle:", "").takeIf { it != "null" && it.isNotEmpty() })
             }
         }
 
@@ -171,6 +193,7 @@ private fun StoryScene(narration: Narration, photos: Photos, voice: Boolean, onA
         photo = { modifier ->
             Photo(photos.painter(ahead.poi.destination.id), description = name, modifier = modifier) {
                 SideBeacon(left = ahead.side == Side.LEFT, description = ahead.side.word())
+                Credit(photos, ahead.poi.destination.id)
             }
         },
     ) {
@@ -227,7 +250,7 @@ private fun QuietScene(maneuver: Maneuver, next: PoiAhead?) {
 
 /** 이야기와 이야기 사이. 다음에 나올 곳을 조용히 예고한다. */
 @Composable
-private fun IdleScene(state: DocentState, photos: Photos, nextId: String?) {
+private fun IdleScene(state: DocentState, photos: Photos, straight: Boolean, nextId: String?) {
     val colors = OnTimeTheme.colors
     val type = OnTimeTheme.type
     val next = state.ahead.find { it.poi.destination.id == nextId }
@@ -236,13 +259,14 @@ private fun IdleScene(state: DocentState, photos: Photos, nextId: String?) {
     SideBySide(
         // 이미 들은 곳으로 가는 길이어도 사진은 그곳이 보일 쪽에 둔다.
         side = next?.side ?: state.ahead.find { it.poi.destination == place }?.side ?: Side.RIGHT,
-        photo = { modifier -> Photo(photos.painter(place.id), description = place.name, modifier = modifier) },
+        photo = { modifier -> Photo(photos.painter(place.id), description = place.name, modifier = modifier) { Credit(photos, place.id) } },
     ) {
         when {
             next != null -> {
                 Text("다음 이야기", style = type.title, color = colors.textSecondary, maxLines = 1)
                 Text(next.poi.destination.name, style = type.displaySmall, maxLines = 1)
-                Text("${distanceText(next.distanceMeters)} 앞 ${next.side.word()}. 가까워지면 들려드립니다", style = type.bodyLarge, color = colors.textSecondary, maxLines = 2)
+                val where = if (straight) "직선 ${distanceText(next.distanceMeters)}" else "${distanceText(next.distanceMeters)} 앞 ${next.side.word()}"
+                Text("$where. 가까워지면 들려드립니다", style = type.bodyLarge, color = colors.textSecondary, maxLines = 2)
             }
             heading != null -> {
                 Row(horizontalArrangement = Arrangement.spacedBy(Space.md), verticalAlignment = Alignment.CenterVertically) {
@@ -288,25 +312,27 @@ private fun DocentState.railStops(short: Boolean): List<RailStop> {
 @Composable
 fun DocentStoppedScreen(
     state: DocentState,
-    title: String,
-    photos: Photos,
+    docent: DocentBundle,
     started: Boolean,
     /** 예시 드라이브를 시작하거나 이어 간다. 재생이 없는 빌드에서는 null. */
     onDrive: (() -> Unit)?,
     onGuide: (String) -> Unit,
 ) {
     val wide = LocalWideLayout.current
+    val photos = docent.photos
+    // 위치로 거리를 재는 빌드는 쪽을 이야기할 때만 말한다. 목록에는 직선 거리만 적는다.
+    val straight = docent.straightLine
     Column(Modifier.fillMaxSize().padding(horizontal = Size.screenPadding, vertical = Space.xxl), verticalArrangement = Arrangement.spacedBy(Space.xl)) {
-        DocentHeader(title, state, "P 정차 중")
+        DocentHeader(docent, state, "P 정차 중")
         if (wide) {
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(Space.xxl)) {
-                Column(Modifier.weight(1.15f).fillMaxHeight().verticalScroll(rememberScrollState())) { PlacesPane(state, photos, onGuide) }
-                Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState())) { TripPane(state, photos, started, onDrive) }
+                Column(Modifier.weight(1.15f).fillMaxHeight().verticalScroll(rememberScrollState())) { PlacesPane(state, photos, straight, onGuide) }
+                Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState())) { TripPane(state, docent, started, onDrive) }
             }
         } else {
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(Space.xl)) {
-                TripPane(state, photos, started, onDrive)
-                PlacesPane(state, photos, onGuide)
+                TripPane(state, docent, started, onDrive)
+                PlacesPane(state, photos, straight, onGuide)
             }
         }
     }
@@ -318,13 +344,13 @@ private fun DocentState.arrivedAt() = stamps.lastOrNull()?.takeIf { place ->
 }
 
 @Composable
-private fun PlacesPane(state: DocentState, photos: Photos, onGuide: (String) -> Unit) {
+private fun PlacesPane(state: DocentState, photos: Photos, straight: Boolean, onGuide: (String) -> Unit) {
     val aheadIds = state.ahead.map { it.poi.destination.id }.toSet()
     val passed = state.told.filter { it.destination.id !in aheadIds }
     Column(verticalArrangement = Arrangement.spacedBy(Space.lg)) {
         Text("${state.destination.name} 가는 길, 이야기 ${passed.size + state.ahead.size}곳", style = OnTimeTheme.type.headline, maxLines = 1)
-        passed.forEach { PlaceRow(it, null, state, photos, onGuide) }
-        state.ahead.forEach { PlaceRow(it.poi, it, state, photos, onGuide) }
+        passed.forEach { PlaceRow(it, null, state, photos, straight, onGuide) }
+        state.ahead.forEach { PlaceRow(it.poi, it, state, photos, straight, onGuide) }
         Card(Modifier.fillMaxWidth(), padding = PaddingValues(Space.md)) {
             Row(horizontalArrangement = Arrangement.spacedBy(Space.lg), verticalAlignment = Alignment.CenterVertically) {
                 Photo(photos.painter(state.destination.id), description = null, modifier = Modifier.size(88.dp), radius = Radius.md)
@@ -340,7 +366,7 @@ private fun PlacesPane(state: DocentState, photos: Photos, onGuide: (String) -> 
 
 /** 이야기가 있는 곳 하나. 아직 앞에 있고 들를 수 있는 곳이면 바로 안내를 시작하는 버튼이 붙는다. */
 @Composable
-private fun PlaceRow(poi: Poi, ahead: PoiAhead?, state: DocentState, photos: Photos, onGuide: (String) -> Unit) {
+private fun PlaceRow(poi: Poi, ahead: PoiAhead?, state: DocentState, photos: Photos, straight: Boolean, onGuide: (String) -> Unit) {
     val colors = OnTimeTheme.colors
     val type = OnTimeTheme.type
     val place = poi.destination
@@ -364,6 +390,7 @@ private fun PlaceRow(poi: Poi, ahead: PoiAhead?, state: DocentState, photos: Pho
                     when {
                         ahead == null -> "지나왔습니다"
                         ahead.distanceMeters == 0 -> "지금 여기"
+                        straight -> "직선 ${distanceText(ahead.distanceMeters)}"
                         else -> "${distanceText(ahead.distanceMeters)} 앞 ${ahead.side.word()}"
                     },
                     style = type.label,
@@ -391,7 +418,8 @@ private fun PlaceRow(poi: Poi, ahead: PoiAhead?, state: DocentState, photos: Pho
 }
 
 @Composable
-private fun TripPane(state: DocentState, photos: Photos, started: Boolean, onDrive: (() -> Unit)?) {
+private fun TripPane(state: DocentState, docent: DocentBundle, started: Boolean, onDrive: (() -> Unit)?) {
+    val photos = docent.photos
     val colors = OnTimeTheme.colors
     val type = OnTimeTheme.type
     val arrived = state.arrivedAt()
@@ -399,6 +427,7 @@ private fun TripPane(state: DocentState, photos: Photos, started: Boolean, onDri
     val hero = arrived ?: state.heading ?: state.destination
     Column(verticalArrangement = Arrangement.spacedBy(Space.lg)) {
         Photo(photos.painter(hero.id), description = hero.name, modifier = Modifier.fillMaxWidth().height(280.dp), scrim = true) {
+            Credit(photos, hero.id)
             PhotoCaption {
                 Column(verticalArrangement = Arrangement.spacedBy(Space.xs)) {
                     Text(
@@ -421,14 +450,14 @@ private fun TripPane(state: DocentState, photos: Photos, started: Boolean, onDri
 
         if (onDrive != null && !finished) {
             when {
-                !started -> Button("경주 코스 시연 시작", onDrive, Modifier.fillMaxWidth(), icon = OnTimeIcon.Play)
+                !started -> Button(docent.driveLabel, onDrive, Modifier.fillMaxWidth(), icon = OnTimeIcon.Play)
                 state.heading == null ->
                     Button("${state.destination.name.withEuro()} 계속 안내", onDrive, Modifier.fillMaxWidth(), variant = ButtonVariant.Route, icon = OnTimeIcon.Navigation)
             }
         }
         if (state.source == Source.REPLAY) {
             Text(
-                "예시 경로를 재생합니다. 거리와 해설, 들르는 데 드는 시간은 예시 값이고 해설은 화면 자막으로 보여 드립니다. 사진은 위키미디어 공용의 CC0 사진입니다.",
+                docent.replayNote,
                 style = type.caption,
                 color = colors.textSecondary,
             )
