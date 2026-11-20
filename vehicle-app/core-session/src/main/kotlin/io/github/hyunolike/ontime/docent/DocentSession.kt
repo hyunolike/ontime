@@ -187,12 +187,17 @@ class DocentSession(
                 }
             }
             // 이야기 도중에 차를 세우면 멈춘다. 정차 화면에는 이야기가 보이지 않으므로, 다시 출발하면 그곳을 처음부터 들려준다.
+            // 해설 본문을 듣던 중이면 들려주지 않은 것으로 되돌리고, 질문이나 확인 문장 단계였으면 이미 들은 것으로 둔다.
             if (!input.driving && narrating?.isActive == true) {
                 narrating?.cancel()
                 narrating = null
-                _state.value?.narration?.ahead?.poi?.let { poi ->
+                val narration = _state.value?.narration
+                val poi = narration?.ahead?.poi
+                if (poi != null && narration.phase == NarrationPhase.TELLING) {
                     toldIds -= poi.destination.id
                     _state.update { it?.copy(narration = null, told = it.told - poi) }
+                } else {
+                    _state.update { it?.copy(narration = null) }
                 }
             }
             if (!input.driving || quiet != null || narrating?.isActive == true) return@collect

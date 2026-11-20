@@ -70,6 +70,28 @@ class AheadTrackerTest {
     }
 
     @Test
+    fun `방향이 크게 바뀌는 중에는 새로 소개하지 않고 안정되면 소개한다`() {
+        val east = poi("e", 500.0, 1_000.0)
+        val tracker = AheadTracker(listOf(east))
+        tracker.update(fix(heading = 0.0))
+        // 꺾는 중: 0도에서 40도로.
+        assertFalse(tracker.update(fix(50.0, 10.0, heading = 40.0)).single().settled)
+        // 같은 방향이 이어지면 안정된 것이다.
+        assertTrue(tracker.update(fix(80.0, 40.0, heading = 45.0)).single().settled)
+    }
+
+    @Test
+    fun `서 있는 동안에는 위치가 멀리 옮겨져도 지나친 것으로 치지 않는다`() {
+        val target = poi("t", 2_000.0, 300.0)
+        val tracker = AheadTracker(listOf(target))
+        tracker.update(fix(0.0))
+        tracker.update(fix(1_000.0))
+        // 시연을 다시 시작해 출발점보다 남쪽으로 위치가 옮겨졌다(속도 0).
+        tracker.update(fix(-3_000.0, speed = 0.0))
+        assertEquals(listOf("t"), tracker.update(fix(-3_000.0, speed = 0.0)).ids())
+    }
+
+    @Test
     fun `가까운 순서다`() {
         val ahead = AheadTracker(listOf(poi("b", 1_400.0, 300.0), poi("a", 500.0, 100.0))).update(fix())
         assertEquals(listOf("a", "b"), ahead.ids())
@@ -89,7 +111,9 @@ class AheadTrackerTest {
         val tracker = AheadTracker(listOf(poi("t", 3_000.0, 1_000.0)))
         tracker.update(fix(0.0))
         tracker.update(fix(-50.0, 50.0, heading = 135.0))
-        assertEquals(listOf("t"), tracker.update(fix(100.0, 50.0, heading = 0.0)).settledIds())
+        // 다시 북쪽으로 돌아온 첫 위치는 방향이 바뀌는 중이라 소개를 미루고, 다음 위치부터 소개한다.
+        tracker.update(fix(100.0, 50.0, heading = 0.0))
+        assertEquals(listOf("t"), tracker.update(fix(150.0, 50.0, heading = 0.0)).settledIds())
     }
 
     @Test
@@ -122,6 +146,7 @@ class AheadTrackerTest {
         val tracker = AheadTracker(listOf(poi("t", 2_000.0, 700.0)))
         tracker.update(fix(speed = 0.0))
         tracker.update(fix(heading = 180.0))
-        assertEquals(listOf("t"), tracker.update(fix(heading = 0.0)).settledIds())
+        tracker.update(fix(heading = 0.0))
+        assertEquals(listOf("t"), tracker.update(fix(50.0, heading = 0.0)).settledIds())
     }
 }

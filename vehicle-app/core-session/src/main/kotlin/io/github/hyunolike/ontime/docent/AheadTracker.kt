@@ -31,6 +31,8 @@ import kotlinx.coroutines.flow.flowOf
  *   잠깐 크게 바뀔 때 아직 지나지 않은 곳을 빼지 않기 위해서다.
  * - 속도가 [minSpeed] 미만이면 진행 방향을 믿지 않고 마지막으로 믿을 수 있었던 방향을 쓴다.
  *   그런 방향이 아직 없으면(출발 전) 모든 장소를 쪽이 정해지지 않은 채로 가까운 순서로 내보낸다.
+ * - 진행 방향이 직전보다 [turning]도 넘게 바뀌는 중이면 새로 소개하지 않는다. 위치 두 점으로 방향을 구하면
+ *   꺾는 순간에는 꺾기 전과 후의 중간값이 나와 쪽이 틀릴 수 있다(실제 위치 모드에서 확인).
  * - 쪽은 지금 진행 방향 기준이라, 앞에 회전이 있으면 회전 뒤에 뒤집힐 수 있다. 우회전을 앞두고 회전 지점보다 먼
  *   오른쪽 장소는 꺾은 뒤 왼쪽이 될 수 있다(좌회전이면 반대). 이런 곳은 회전을 지날 때까지 소개하지 않는다.
  *   회전 반대쪽 장소는 꺾어도 쪽이 바뀌지 않는다. 또 이 목록을 쓰는 도슨트는 회전 600m 앞부터 새 이야기를
@@ -46,8 +48,15 @@ class AheadTracker(
     private val undecided: Double = 15.0,
     private val undecidedBeyond: Int = 1_500,
     private val minSpeed: Double = 1.0,
+    private val turning: Double = 15.0,
+    /**
+     * 경로를 알면 그 경로를 따라 지났는지로 지나침을 판정한다. 위치만으로 "뒤에서 멀어짐"을 보면 경유지에 들르느라
+     * 길을 벗어날 때 앞의 장소까지 지나친 것으로 본다(실제 위치 모드에서 확인). null이면 위치만으로 판정한다.
+     */
+    private val passedOnRoute: ((Poi) -> Boolean)? = null,
 ) {
     private var trusted: Double? = null
+    private var steady = true
     private val passed = mutableSetOf<String>()
 
     /** 가장 가까웠던 거리. */
@@ -67,21 +76,27 @@ class AheadTracker(
     /** 지나친 곳과 진행 방향 기억을 지운다. 같은 길을 처음부터 다시 달릴 때 쓴다. */
     fun reset() {
         trusted = null
+        steady = true
         passed.clear()
         closest.clear()
     }
 
     /** [nextTurn]은 앞에 있는 다음 좌회전이나 우회전. 모르면 null. */
     fun update(fix: Fix, nextTurn: Maneuver? = null): List<PoiAhead> {
-        if (fix.heading != null && fix.speedMetersPerSecond >= minSpeed) trusted = fix.heading
-        val heading = trusted
+        val heading = fix.heading
+        if (heading != null && fix.speedMetersPerSecond >= minSpeed) {
+            steady = trusted?.let { abs(relative(heading, it)) <= turning } ?: true
+            trusted = heading
+        }
+        val known = trusted
+        val moving = fix.speedMetersPerSecond >= minSpeed
         val measured = catalog.map { poi ->
             val distance = distanceMeters(fix.latitude, fix.longitude, poi.destination.latitude, poi.destination.longitude)
             val bearing = bearingDegrees(fix.latitude, fix.longitude, poi.destination.latitude, poi.destination.longitude)
-            val delta = relative(bearing, heading ?: fix.heading ?: 0.0)
+            val delta = relative(bearing, known ?: fix.heading ?: 0.0)
             Measured(poi, distance, delta)
         }
-        if (heading == null) return measured.sortedBy { it.distance }.map { it.toAhead(settled = false) }
+        if (known == null) return measured.sortedBy { it.distance }.map { it.toAhead(settled = false) }
 
         val result = mutableListOf<PoiAhead>()
         for (m in measured) {
@@ -90,18 +105,23 @@ class AheadTracker(
             when {
                 m.distance <= near -> result += m.toAhead(settled = true)
                 id in passed -> Unit
-                abs(m.delta) > behind && m.distance > nearest + receding -> passed += id
-                else -> {
-                    val decided = !(abs(m.delta) < undecided && m.distance > undecidedBeyond)
-                    val ahead = m.toAhead(settled = false)
-                    // 꺾는 쪽에 있고 회전 지점보다 멀면 꺾은 뒤 쪽이 뒤집힐 수 있다.
-                    val forward = m.distance * cos(Math.toRadians(m.delta))
-                    val flips = nextTurn?.turn == ahead.side && forward > nextTurn.distanceMeters
-                    result += ahead.copy(settled = abs(m.delta) <= cone && m.distance <= radius && decided && !flips)
-                }
+                // 서 있는 동안에는 아무것도 지나칠 수 없다. 위치가 순간 이동한 경우(시연을 다시 시작함)도 여기에 걸린다.
+                passedOnRoute != null -> if (passedOnRoute.invoke(m.poi)) passed += id else result += settle(m, nextTurn)
+                moving && abs(m.delta) > behind && m.distance > nearest + receding -> passed += id
+                else -> result += settle(m, nextTurn)
             }
         }
         return result.sortedBy { it.distanceMeters }
+    }
+
+    /** 지나치지 않은 곳. 쪽을 믿고 지금 소개해도 되면 settled. */
+    private fun settle(m: Measured, nextTurn: Maneuver?): PoiAhead {
+        val decided = !(abs(m.delta) < undecided && m.distance > undecidedBeyond)
+        val ahead = m.toAhead(settled = false)
+        // 꺾는 쪽에 있고 회전 지점보다 멀면 꺾은 뒤 쪽이 뒤집힐 수 있다.
+        val forward = m.distance * cos(Math.toRadians(m.delta))
+        val flips = nextTurn?.turn == ahead.side && forward > nextTurn.distanceMeters
+        return ahead.copy(settled = steady && abs(m.delta) <= cone && m.distance <= radius && decided && !flips)
     }
 
     private data class Measured(val poi: Poi, val distance: Int, val delta: Double) {

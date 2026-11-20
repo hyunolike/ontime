@@ -102,6 +102,7 @@ private fun distanceText(meters: Int): String = if (meters >= 1000) "%.1fkm".for
 @Composable
 private fun DocentHeader(docent: DocentBundle, state: DocentState, trailing: String) {
     val title = docent.title
+    val modeChip by docent.modeChip.collectAsState()
     val wide = LocalWideLayout.current
     val trip = "${state.destination.name}까지 ${minutesText(state.remaining)}"
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.md), verticalAlignment = Alignment.CenterVertically) {
@@ -114,7 +115,7 @@ private fun DocentHeader(docent: DocentBundle, state: DocentState, trailing: Str
             maxLines = 1,
         )
         // 예시로 넣은 해설을 실제 관광 데이터처럼 보이게 두지 않는다.
-        if (state.source == Source.REPLAY) Chip(if (wide) docent.replayChip else docent.replayChipShort, icon = OnTimeIcon.Play)
+        if (state.source == Source.REPLAY) Chip(modeChip ?: if (wide) docent.replayChip else docent.replayChipShort, icon = OnTimeIcon.Play)
         Text(trailing, style = OnTimeTheme.type.label, color = OnTimeTheme.colors.textSecondary, maxLines = 1)
     }
 }
@@ -478,8 +479,9 @@ private fun TripPane(state: DocentState, docent: DocentBundle, started: Boolean,
             }
         }
         if (state.source == Source.REPLAY) {
+            val modeNote by docent.modeNote.collectAsState()
             Text(
-                docent.replayNote,
+                modeNote ?: docent.replayNote,
                 style = type.caption,
                 color = colors.textSecondary,
             )
