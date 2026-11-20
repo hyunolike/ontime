@@ -18,9 +18,11 @@ fun nearbyOnFoot(
     limit: Int = 3,
     detour: Double = 1.3,
     walkSpeed: Double = 1.2,
+    /** 이 거리 안은 지금 서 있는 곳으로 보고 뺀다. */
+    here: Int = 150,
 ): List<Walkable> = catalog
     .map { it to AheadTracker.distanceMeters(fix.latitude, fix.longitude, it.destination.latitude, it.destination.longitude) }
-    .filter { (_, d) -> d <= withinMeters }
+    .filter { (_, d) -> d in (here + 1)..withinMeters }
     .sortedBy { (_, d) -> d }
     .take(limit)
     .map { (poi, d) -> Walkable(poi, ceil(d * detour / walkSpeed / 60).toInt().coerceAtLeast(1)) }

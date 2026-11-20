@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#0B0F14"/>
+  <!-- The adaptive mask shows the central 72 dp of the 108 dp layers. -->
+  <svg width="512" height="512" viewBox="18 18 72 72" fill="none"
+       stroke-width="6" stroke-linecap="round">
+    <path d="M80,54 A26,26 0,0 1,28 54" stroke="#E7EEF4"
+          transform="rotate(45 54 54)"/>
+    <path d="M54,28 A26,26 0,0 1,80 54" stroke="#3DDC97"/>
+    <path d="M46,54 L62,54 M54,46 L54,62" stroke="#3DDC97"/>
+  </svg>
+</svg>
