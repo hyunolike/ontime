@@ -1,7 +1,7 @@
 # 웹 체험판 (web-demo) 명세와 설계
 
 - 작성일: 2026-11-20
-- 상태: 구현 완료, 브라우저 확인 (공개 전)
+- 상태: 공개 (https://gilbeot-three.vercel.app, 2026-11-20)
 
 ## 1. 문제
 
@@ -34,7 +34,14 @@
 
 ## 5. 공개
 
-GitHub Pages(`web/` 배포)로 공개하는 것은 사용자 확인 뒤에 한다.
+Vercel 프로젝트 `gilbeot`(hyunho-jangs-projects)로 공개한다. 주소는 https://gilbeot-three.vercel.app 이다(`gilbeot.vercel.app`은 이미 쓰이고 있어 Vercel이 정한 이름). 처음에 GitHub Pages로 공개했다가 사용자 요청으로 Vercel로 옮기고 Pages는 껐다(2026-11-20).
+
+`web/`을 바꾼 뒤 다시 배포한다. 정적 파일이라 빌드 설정이 없다.
+
+```bash
+cd vehicle-app && ./gradlew :web-export:run   # 앱 판단이 바뀌었으면 기록을 다시 뽑는다
+cd ../web && vercel deploy --prod --yes --project gilbeot
+```
 
 ## 6. 검증
 
@@ -46,4 +53,4 @@ GitHub Pages(`web/` 배포)로 공개하는 것은 사용자 확인 뒤에 한�
 - 기록 7개(갈래: 없음, 석촌동, 방이동, 둘 다, 출발 전 안내 석촌동, 방이동, 석촌동 뒤 방이동). `ExportTest`가 갈래 정렬(답하는 프레임까지 같음), 쪽(서울공항 오른쪽, 고분군과 몽촌토성 왼쪽), 목적지 도착, 도장을 확인한다.
 - 브라우저(Playwright)로 확인: 출발, 회전 앞 쉼, 석촌동 질문에 "들르기"로 갈래 바꾸기, 경유지 도착과 도장, 충전 카드, 석촌동 "지나가기"와 방이동 "들르기", 계속 안내, 목적지 충전 카드(몽촌토성 14분, 방이동 16분, 에뮬레이터 앱과 같음), 390px 폭에서 가로 스크롤 없음.
 - 체험판에서 찾은 앱 버그: 걸어서 갈 곳에 지금 서 있는 곳이 "걸어서 1분"으로 들어감. `nearbyOnFoot`이 150m 안을 빼도록 고쳤다.
-- 공개: `.github/workflows/pages.yml`을 넣어 두었다. 저장소 설정에서 Pages를 켜야 배포된다.
+- 공개: Vercel 주소에서 페이지, 기록, 사진이 로그인 없이 열리고(HTTP 200), 출발과 "들르기", 경유지 도착과 도장, 지도 타일을 브라우저로 확인했다.
