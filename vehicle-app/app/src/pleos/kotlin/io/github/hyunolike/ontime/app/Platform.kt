@@ -23,6 +23,12 @@ import io.github.hyunolike.ontime.docent.LiveStories
 import io.github.hyunolike.ontime.fake.ScenarioSongpa
 import io.github.hyunolike.ontime.fake.ScriptedSpeech
 import io.github.hyunolike.ontime.fake.track.ReplayBackedNavi
+import io.github.hyunolike.ontime.fake.track.ReplayVehicle
+import io.github.hyunolike.ontime.tour.FileCache
+import io.github.hyunolike.ontime.tour.TourApiClient
+import io.github.hyunolike.ontime.tour.TourCatalog
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.MutableStateFlow
 import io.github.hyunolike.ontime.fake.track.TrackPlayer
 
 /**
@@ -50,6 +56,26 @@ object Platform {
         val location = PleosLocation(context).also { it.start() }
         val player = TrackPlayer(ScenarioSongpa.track, start = Instant.now())
         val drive = ReplayBackedNavi(navi, player)
+        // 주행은 재생기, 충전은 실제 차량 값. 에뮬레이터에서 충전구를 열 수 없으면 `poc charge`로 시험 값을 켠다.
+        val docentVehicle = ReplayVehicle(player, vehicle)
+        val tracker = AheadTracker(ScenarioSongpa.pois)
+        // local.properties에 TourAPI 키가 있으면 경로를 따라 관광공사 관광지를 더한다. 실패하면 내장 목록만 쓴다.
+        BuildConfig.TOURAPI_KEY.takeIf { it.isNotEmpty() }?.let { key ->
+            scope.launch {
+                val extra = withContext(Dispatchers.IO) {
+                    val client = TourApiClient(key, cache = FileCache(java.io.File(context.filesDir, "tour")))
+                    val points = player.samples(2_000.0).map { it.latitude to it.longitude }
+                    TourCatalog(client).load(points, existing = ScenarioSongpa.pois)
+                }
+                android.util.Log.i("OnTimePleos", "<- TourCatalog ${extra.size}곳: ${extra.joinToString { it.destination.name }}")
+                // 수집과 같은 메인 스레드에서 바꾼다.
+                tracker.setCatalog(ScenarioSongpa.pois + extra)
+            }
+        }
+        // local.properties에 Playground 등록 정보가 있으면 도슨트 전용 서버 음성을 쓴다. 없으면 자막과 버튼이다.
+        val voiceSpeech = BuildConfig.PLEOS_TTS_CLIENT_ID.takeIf { it.isNotEmpty() }?.let { id ->
+            PleosSpeech(context, PleosSpeech.ServerCredentials(id, BuildConfig.PLEOS_TTS_CLIENT_SECRET)).also { it.start() }
+        }
         return PlatformBundle(
             plan = TripPlan(
                 title = "시험용 일정 · 인천공항 제1터미널",
@@ -71,19 +97,21 @@ object Platform {
                 title = "송파 백제 드라이브",
                 time = player,
                 navi = drive,
-                vehicle = player,
-                // 에뮬레이터의 기기 내 음성 엔진이 오류를 내서 음성은 쓰지 않는다. 해설은 자막, 답은 버튼이다.
-                speech = ScriptedSpeech(answer = false, answerDelay = 10.seconds, sayDelay = 3.5.seconds),
+                vehicle = docentVehicle,
+                // 서버 음성이 없으면 에뮬레이터의 기기 내 엔진이 오류를 내므로 자막과 버튼만 쓴다.
+                speech = voiceSpeech ?: ScriptedSpeech(answer = false, answerDelay = 10.seconds, sayDelay = 3.5.seconds),
+                voice = voiceSpeech?.ready ?: MutableStateFlow(false),
+                askWindow = if (voiceSpeech != null) 12.seconds else kotlin.time.Duration.INFINITE,
                 road = player,
-                stories = LiveStories(player, AheadTracker(ScenarioSongpa.pois), player.nextTurn),
+                stories = LiveStories(player, tracker, player.nextTurn),
                 play = drive::drive,
                 photos = mapOf(
                     ScenarioSongpa.SEOKCHON.id to PlacePhoto(R.drawable.photo_seokchon, "Saigen Jiro, CC0"),
                     ScenarioSongpa.BANGI.id to PlacePhoto(R.drawable.photo_bangi, "Gary Todd, CC0"),
                     // 박물관 바로 옆의 몽촌토성 사진이다.
                     ScenarioSongpa.HANSEONG.id to PlacePhoto(R.drawable.photo_mongchon, "몽촌토성, Saigen Jiro, CC0"),
+                    ScenarioSongpa.MONGCHON.id to PlacePhoto(R.drawable.photo_mongchon, "Saigen Jiro, CC0"),
                 ),
-                voice = false,
                 replayChip = "위치 재생",
                 replayChipShort = "위치 재생",
                 replayNote = "경로와 경유지는 실제 내비에 보내고, 위치와 남은 시간은 OpenStreetMap 경로(© OpenStreetMap 기여자)를 " +
@@ -91,8 +119,18 @@ object Platform {
                 driveLabel = "송파 코스 출발",
                 straightLine = true,
                 quietWithin = 600,
+                walkFrom = player,
+                catalog = { tracker.places },
+                remember = true,
+                reset = {
+                    drive.reset()
+                    tracker.reset()
+                    docentVehicle.simulateCharging(false)
+                },
             ),
             poc = { name ->
+                // charge — 충전 시험 값을 켜고 끈다. 충전 대기 화면을 에뮬레이터에서 보여 주기 위해서다.
+                if (name == "charge") docentVehicle.simulateCharging(!docentVehicle.simulatingCharge)
                 // route:위도,경도 — 그곳으로 경로를 잡는다. 시연 경로의 거리와 회전을 재는 데 쓴다.
                 if (name.startsWith("route:")) {
                     val (lat, lon) = name.removePrefix("route:").split(",").map { it.trim().toDouble() }

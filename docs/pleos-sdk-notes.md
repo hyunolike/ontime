@@ -60,6 +60,18 @@ API Reference 페이지는 스크립트로 그려져 본문을 읽지 못했습�
 
 그래서 도슨트의 `pleos` 빌드는 위치를 OpenStreetMap 경로로 재생하고, 경로와 경유지만 실제 내비에 보낸다. 설계는 [live-docent](features/live-docent/design.md)에 있다.
 
+### 충전 상태와 위치 주입 (2026-11-20, 오후)
+
+| 항목 | 결과 |
+|---|---|
+| `EvBattery.getEvBatteryStateOfCharge` | 성공. 에뮬레이터에서 `100`(퍼센트)을 받았다. `registerEvBatteryStateOfCharge`도 오류 없이 등록된다 |
+| `EvBattery.isEvChargePortOpen`, `registerEvChargePortOpen` | 오류 없이 `false`. 충전구를 여는 방법(Virtual Console)은 아직 시험하지 않았다. 시연에서는 `poc charge`로 시험 값을 켠다 |
+| 권한 | `pleos.car.permission.CAR_ENERGY`를 매니페스트에 넣어 두었다. 런타임 허용 없이 값이 왔다 |
+| FusedLocation과 `geo fix` | **`adb emu geo fix`로 넣은 좌표가 `FusedLocation.onChanged`로 들어온다**(경주 좌표 35.839, 129.211을 넣은 뒤 그대로 받음). 내비만 NMEA 체크섬 문제로 버린다. 실차 위치 경로(`PleosLocation`)는 에뮬레이터에서 좌표를 바꿔 가며 시험할 수 있다 |
+| 앱이 떠 있을 때 `am start --es` | 분할 화면에 떠 있는 앱에는 추가 값이 전달되지 않았다(`onNewIntent`가 불리지 않음). 시험 동작은 `adb shell am broadcast -a io.github.hyunolike.ontime.POC --es poc <이름>`으로 보낸다 |
+| `onReRouteEnded` | 로그만 남긴다. 도슨트의 앞에 있는 장소는 위치로 계산하므로 다시 계산할 것이 없다 |
+| TTS, STT 서버 모드 | `registerApp(clientId, clientSecret, OnServerConnectionListener)`로 등록한다(javap로 확인). 등록 정보가 없어 아직 시험하지 못했다 |
+
 ### 내비와 나란히 띄우기 (2026-11-14)
 
 ![내비와 나란히 띄운 화면](screenshots/8-sdk-check.png)

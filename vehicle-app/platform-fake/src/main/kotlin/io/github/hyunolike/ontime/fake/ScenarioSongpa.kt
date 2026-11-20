@@ -24,6 +24,7 @@ object ScenarioSongpa {
     val SEOUL_AIRBASE = Destination("songpa-seoul-airbase", "서울공항", 37.4445568, 127.1104831, "경기 성남시 수정구")
     val SEOKCHON = Destination("songpa-seokchon", "석촌동 고분군", 37.5024456, 127.1022937, "서울 송파구 석촌동")
     val BANGI = Destination("songpa-bangi", "방이동 고분군", 37.5074183, 127.1192072, "서울 송파구 방이동")
+    val MONGCHON = Destination("songpa-mongchon", "몽촌토성", 37.5175329, 127.1126700, "서울 송파구 방이동, 올림픽공원")
 
     val pois = listOf(
         Poi(
@@ -52,6 +53,15 @@ object ScenarioSongpa {
             highlight = "잔디 언덕 사이 산책",
             stayMinutes = 20,
             extraMinutes = 25,
+        ),
+        // 목적지 바로 옆이라 길가에서 소개하고, 차를 세운 뒤 걸어서 둘러볼 곳으로도 쓴다.
+        Poi(
+            MONGCHON,
+            "흙을 쌓아 만든 백제의 성이에요. 지금은 올림픽공원 안에서 성벽 위 산책로로 걸어 볼 수 있어요.",
+            canStop = false,
+            source = Source.REPLAY,
+            highlight = "성벽 위 산책로 걷기",
+            shortStory = "흙으로 쌓은 백제의 성, 몽촌토성이에요.",
         ),
     )
 

@@ -1,6 +1,7 @@
 package io.github.hyunolike.ontime.app
 
 import android.app.Application
+import io.github.hyunolike.ontime.docent.DocentMemory
 import io.github.hyunolike.ontime.docent.DocentSession
 import io.github.hyunolike.ontime.docent.DocentState
 import io.github.hyunolike.ontime.session.OnTimeSession
@@ -22,7 +23,7 @@ class OnTimeApp : Application() {
     val runtime: OnTimeRuntime by lazy { OnTimeRuntime(this) }
 }
 
-class OnTimeRuntime(app: Application) {
+class OnTimeRuntime(private val app: Application) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val platform = Platform.create(app)
     private val session = OnTimeSession(platform.plan, platform.time, platform.navi, platform.vehicle, platform.speech)
@@ -47,7 +48,11 @@ class OnTimeRuntime(app: Application) {
     val choosing: StateFlow<String?> = _choosing
 
     val docent = platform.docent
-    private val docentSession = docent?.let { DocentSession(it.time, it.navi, it.vehicle, it.speech, it.road, it.stories, quietWithin = it.quietWithin) }
+    private val prefs = app.getSharedPreferences("docent", android.content.Context.MODE_PRIVATE)
+    private val memory = if (docent?.remember == true) DocentMemory.decode(prefs.getString(MEMORY_KEY, null)) else null
+    private val docentSession = docent?.let { DocentSession(it.time, it.navi, it.vehicle, it.speech, it.road, it.stories, quietWithin = it.quietWithin, seatHint = true,
+            walkFrom = it.walkFrom, catalog = it.catalog, memory = memory, askWindow = it.askWindow,
+        ) }
     val docentState: StateFlow<DocentState?> = docentSession?.state ?: MutableStateFlow(null)
 
     private val _docentStarted = MutableStateFlow(false)
@@ -55,6 +60,14 @@ class OnTimeRuntime(app: Application) {
 
     init {
         if (docentSession != null) scope.launch { docentSession.run() }
+        if (docentSession != null && docent?.remember == true) {
+            // 들은 곳이나 도장이 바뀔 때만 저장한다.
+            scope.launch {
+                docentState.map { docentSession.snapshot()?.encode() }.distinctUntilChanged().collect { saved ->
+                    if (saved != null) prefs.edit().putString(MEMORY_KEY, saved).apply()
+                }
+            }
+        }
         scope.launch { session.run() }
         scope.launch {
             // 주행 중에는 비교 화면을 보여 주지 않으므로 소요 시간 조회도 하지 않는다.
@@ -80,6 +93,20 @@ class OnTimeRuntime(app: Application) {
         if (docentDrive?.isActive == true) return
         _docentStarted.value = true
         docentDrive = scope.launch { play() }
+    }
+
+    /** 들은 곳과 도장, 재생, 내비 경유지를 모두 처음으로 되돌린다. 시연을 다시 할 때 쓴다. */
+    fun restartDocent() {
+        val session = docentSession ?: return
+        val reset = docent?.reset ?: return
+        scope.launch {
+            docentDrive?.cancel()
+            docentDrive = null
+            reset()
+            session.reset()
+            prefs.edit().remove(MEMORY_KEY).apply()
+            _docentStarted.value = false
+        }
     }
 
     /** "들러 볼까요?"에 화면의 버튼으로 답한다. */
@@ -120,5 +147,6 @@ class OnTimeRuntime(app: Application) {
     private companion object {
         const val PREVIEW_INTERVAL_MS = 15_000L
         const val ROUTE_SETTLE_MS = 600L
+        const val MEMORY_KEY = "memory"
     }
 }

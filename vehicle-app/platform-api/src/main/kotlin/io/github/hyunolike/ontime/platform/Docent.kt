@@ -24,6 +24,8 @@ data class Poi(
      * 실제 구현은 내비의 소요 시간 조회로 얻은 우회 시간에 [stayMinutes]를 더한다.
      */
     val extraMinutes: Int? = null,
+    /** 시간이 촉박할 때 쓰는 한 문장 해설. 비어 있으면 [story]의 첫 문장을 쓴다. */
+    val shortStory: String = "",
 )
 
 /**

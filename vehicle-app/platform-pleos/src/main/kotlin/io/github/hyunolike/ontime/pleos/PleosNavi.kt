@@ -105,6 +105,12 @@ class PleosNavi(
             requestDestinationInfo()
         }
 
+        override fun onReRouteEnded() {
+            // 길을 벗어나 경로를 다시 잡았다. 도슨트의 앞에 있는 장소는 위치로 계산하므로 다시 계산할 것은 없다.
+            PleosLog.event("onReRouteEnded")
+            requestDestinationInfo()
+        }
+
         override fun onDestinationChanged() {
             PleosLog.event("onDestinationChanged")
             requestDestinationInfo()

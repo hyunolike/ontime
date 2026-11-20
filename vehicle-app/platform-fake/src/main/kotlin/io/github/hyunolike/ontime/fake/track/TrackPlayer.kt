@@ -69,6 +69,9 @@ class TrackPlayer(
     /** 경로 위에서 달린 거리(미터). */
     val traveled: Double get() = state.value.traveled
 
+    /** 경유지를 정해 두었으면(닿았든 아니든) true. */
+    val hasStop: Boolean get() = state.value.stop != null
+
     /** 들른 경유지에 서 있으면 true. */
     val atVisitedStop: Boolean get() = state.value.arrivedStop
 
@@ -144,6 +147,17 @@ class TrackPlayer(
         }
         val s = state.value
         if (s.stop != null && s.traveled >= s.stop.atMeters) state.value = s.copy(arrivedStop = true)
+    }
+
+    /** 경로 위 [everyMeters] 간격의 지점(출발점과 끝 포함). 경로 주변 장소를 찾을 때 쓴다. */
+    fun samples(everyMeters: Double): List<LatLon> {
+        val marks = generateSequence(0.0) { it + everyMeters }.takeWhile { it < length }.toList() + length
+        return marks.map { m -> pointAt(m).let { (x, y) -> LatLon(lat0 + y / metersPerDegLat, lon0 + x / metersPerDegLon) } }
+    }
+
+    /** 출발 전으로 되돌린다. 시연을 처음부터 다시 할 때 쓴다. 달리는 중이면 먼저 [run]을 멈춰야 한다. */
+    fun reset() {
+        state.value = State()
     }
 
     /** 시험용: 경로 위 [meters] 지점으로 옮긴다. */

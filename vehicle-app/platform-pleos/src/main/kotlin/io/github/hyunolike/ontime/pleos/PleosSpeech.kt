@@ -10,6 +10,14 @@ import io.github.hyunolike.ontime.voice.YesNoParser
 import java.util.Locale
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
@@ -25,9 +33,23 @@ import ai.pleos.playground.tts.constant.Mode as TtsMode
  * Playground My Project의 Client ID로 등록하는 서버 모드로 바꾼다.
  * Gleo Interface는 공모전 참가팀이 쓸 수 없어 답은 앱이 직접 해석한다.
  */
-class PleosSpeech(context: Context) : SpeechGateway {
-    private val tts = TextToSpeech(context, TtsMode.ON_DEVICE)
-    private val stt = SpeechToText(context, SttMode.ON_DEVICE)
+class PleosSpeech(
+    context: Context,
+    /** Playground My Project의 등록 정보. 있으면 서버 모드로 등록한다. 없으면 ON_DEVICE. */
+    private val server: ServerCredentials? = null,
+) : SpeechGateway {
+    /** Pleos Playground My Project에서 받은 등록 정보. */
+    data class ServerCredentials(val clientId: String, val clientSecret: String)
+
+    private val tts = TextToSpeech(context, if (server != null) TtsMode.SERVER else TtsMode.ON_DEVICE)
+    private val stt = SpeechToText(context, if (server != null) SttMode.SERVER else SttMode.ON_DEVICE)
+
+    private val ttsConnected = MutableStateFlow(server == null)
+    private val sttConnected = MutableStateFlow(server == null)
+
+    /** 말하고 들을 준비가 됐으면 참. 서버 모드는 등록이 끝나야 참이 된다. */
+    val ready: StateFlow<Boolean> = combine(ttsConnected, sttConnected) { a, b -> a && b }
+        .stateIn(CoroutineScope(Dispatchers.Main), SharingStarted.Eagerly, server == null)
     private val mutex = Mutex()
     private var speaking: CompletableDeferred<Unit>? = null
     private var hearing: CompletableDeferred<String?>? = null
@@ -84,6 +106,37 @@ class PleosSpeech(context: Context) : SpeechGateway {
         stt.initialize()
         stt.setLocale(Locale.KOREAN)
         stt.addListener(sttListener)
+        server?.let(::register)
+    }
+
+    /** 서버 모드 등록. 실패하면 준비되지 않은 채로 남고, 도슨트는 자막과 버튼으로 동작한다. */
+    private fun register(credentials: ServerCredentials) {
+        PleosLog.call("tts.registerApp")
+        runCatching {
+            tts.registerApp(credentials.clientId, credentials.clientSecret, object : ai.pleos.playground.tts.listener.OnServerConnectionListener {
+                override fun onConnected() {
+                    PleosLog.event("tts.onConnected")
+                    ttsConnected.value = true
+                }
+
+                override fun onFailed(errorType: TtsErrorType) {
+                    PleosLog.error("tts.registerApp", errorType)
+                }
+            })
+        }.onFailure { PleosLog.error("tts.registerApp", it) }
+        PleosLog.call("stt.registerApp")
+        runCatching {
+            stt.registerApp(credentials.clientId, credentials.clientSecret, object : ai.pleos.playground.stt.listener.OnServerConnectionListener {
+                override fun onConnected() {
+                    PleosLog.event("stt.onConnected")
+                    sttConnected.value = true
+                }
+
+                override fun onFailed(errorType: SttErrorType) {
+                    PleosLog.error("stt.registerApp", errorType)
+                }
+            })
+        }.onFailure { PleosLog.error("stt.registerApp", it) }
     }
 
     fun stop() {
@@ -93,7 +146,31 @@ class PleosSpeech(context: Context) : SpeechGateway {
         stt.release()
     }
 
-    override suspend fun say(text: String) = mutex.withLock { speak(text) }
+    override suspend fun say(text: String) {
+        // 서버 등록 전이면 말하지 않는다. 화면 자막이 대신한다.
+        if (!ready.value) return
+        mutex.withLock { speak(text) }
+    }
+
+    /** 무응답이나 알아듣지 못한 답은 null. 등록 전이면 답하지 않고 기다린다(버튼과 제한 시간이 질문을 닫는다). */
+    override suspend fun listenYesNo(prompt: String): Boolean? {
+        if (!ready.value) awaitCancellation()
+        return mutex.withLock {
+            speak(prompt)
+            YesNoParser.parse(listen().orEmpty())
+        }
+    }
+
+    private suspend fun listen(): String? {
+        val heard = CompletableDeferred<String?>()
+        hearing = heard
+        PleosLog.call("stt.request")
+        stt.request()
+        val text = withTimeoutOrNull(LISTEN_TIMEOUT) { heard.await() }
+        hearing = null
+        runCatching { stt.stop() }
+        return text
+    }
 
     override suspend fun askYesNo(prompt: String): Boolean = mutex.withLock {
         speak(prompt)

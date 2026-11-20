@@ -40,6 +40,10 @@ enum class OnTimeIcon(@DrawableRes val resource: Int) {
     Stamp(R.drawable.ic_stamp),
     AddStop(R.drawable.ic_add_stop),
     Route(R.drawable.ic_route),
+    Battery(R.drawable.ic_battery), // 전기차 배터리 잔량
+    SeatPassenger(R.drawable.ic_seat_passenger), // 조수석 쪽 안내
+    Restart(R.drawable.ic_restart), // 처음부터 다시 시작
+    Volume(R.drawable.ic_volume), // 음성 해설 켜짐
 }
 
 /** 뜻을 전하는 아이콘에는 [description]을 넣고, 옆 글자를 꾸미기만 하면 null로 둔다. */

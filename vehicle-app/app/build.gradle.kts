@@ -22,6 +22,15 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "0.1.0"
+        // 시연용 키는 local.properties에서만 읽는다. 키가 들어간 APK는 로컬 시연에만 쓰고 제출하거나 공개하지 않는다.
+        val local = Properties().apply {
+            val file = rootProject.file("local.properties")
+            if (file.exists()) file.inputStream().use(::load)
+        }
+        fun key(name: String) = "\"" + local.getProperty(name, "").replace("\"", "") + "\""
+        buildConfigField("String", "PLEOS_TTS_CLIENT_ID", key("pleos.tts.clientId"))
+        buildConfigField("String", "PLEOS_TTS_CLIENT_SECRET", key("pleos.tts.clientSecret"))
+        buildConfigField("String", "TOURAPI_KEY", key("tourapi.key"))
     }
 
     signingConfigs {
@@ -64,6 +73,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -74,6 +84,8 @@ dependencies {
     "pleosImplementation"(project(":platform-pleos"))
     // pleos 빌드도 위치는 재생한다. 에뮬레이터의 내비 차가 움직이지 않아서다(docs/features/live-docent).
     "pleosImplementation"(project(":platform-fake"))
+    // 경로 주변 관광지(한국관광공사 TourAPI). 키가 있을 때만 쓴다.
+    "pleosImplementation"(project(":platform-tour"))
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
