@@ -83,6 +83,8 @@ class OnTimeRuntime(private val app: Application) {
     /** SDK 호출 시험. 실제 SDK 빌드에서만 동작한다. */
     fun poc(name: String) {
         platform.poc?.invoke(name)
+        // 위치 출처를 바꾸면 들은 곳과 재생 위치가 맞지 않으므로 처음부터 다시 한다.
+        if (name.startsWith("location-")) restartDocent()
     }
 
     private var docentDrive: Job? = null

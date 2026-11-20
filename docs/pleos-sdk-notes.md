@@ -68,6 +68,7 @@ API Reference 페이지는 스크립트로 그려져 본문을 읽지 못했습�
 | `EvBattery.isEvChargePortOpen`, `registerEvChargePortOpen` | 오류 없이 `false`. 충전구를 여는 방법(Virtual Console)은 아직 시험하지 않았다. 시연에서는 `poc charge`로 시험 값을 켠다 |
 | 권한 | `pleos.car.permission.CAR_ENERGY`를 매니페스트에 넣어 두었다. 런타임 허용 없이 값이 왔다 |
 | FusedLocation과 `geo fix` | **`adb emu geo fix`로 넣은 좌표가 `FusedLocation.onChanged`로 들어온다**(경주 좌표 35.839, 129.211을 넣은 뒤 그대로 받음). 내비만 NMEA 체크섬 문제로 버린다. 실차 위치 경로(`PleosLocation`)는 에뮬레이터에서 좌표를 바꿔 가며 시험할 수 있다 |
+| FusedLocation으로 경로 따라가기 | `geo fix`를 0.5초마다 보내면 `onChanged`가 약 1초마다 온다. 진행 방향(heading)은 늘 0이라 연속한 위치로 계산한다. 위치를 멀리 옮기면 그 사이를 이어 주는 것처럼 보이는 값이 올 수 있다([live-location](features/live-location/spec.md)) |
 | 앱이 떠 있을 때 `am start --es` | 분할 화면에 떠 있는 앱에는 추가 값이 전달되지 않았다(`onNewIntent`가 불리지 않음). 시험 동작은 `adb shell am broadcast -a io.github.hyunolike.ontime.POC --es poc <이름>`으로 보낸다 |
 | `onReRouteEnded` | 로그만 남긴다. 도슨트의 앞에 있는 장소는 위치로 계산하므로 다시 계산할 것이 없다 |
 | TTS, STT 서버 모드 | `registerApp(clientId, clientSecret, OnServerConnectionListener)`로 등록한다(javap로 확인). 등록 정보가 없어 아직 시험하지 못했다 |

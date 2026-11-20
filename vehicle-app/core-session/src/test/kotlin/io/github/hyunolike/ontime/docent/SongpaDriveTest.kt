@@ -77,7 +77,7 @@ class SongpaDriveTest {
         val player = TrackPlayer(ScenarioSongpa.track, Instant.parse("2026-12-05T01:00:00Z"))
         val primary = RecordingNavi()
         val navi = ReplayBackedNavi(primary, player)
-        val tracker = AheadTracker(ScenarioSongpa.pois)
+        val tracker = AheadTracker(ScenarioSongpa.pois, passedOnRoute = { player.hasPassed(it.destination) })
         val stories = LiveStories(player, tracker, player.nextTurn)
         val vehicle = ReplayVehicle(player)
         val session = DocentSession(
@@ -167,7 +167,7 @@ class SongpaDriveTest {
         assertEquals(listOf(place), last.stamps)
         assertEquals(listOf("route:songpa-hanseong", "add:${place.id}", "remove"), run.primary.calls)
         // 들른 뒤에도 남은 곳 이야기는 이어지고, 쪽은 지날 때의 쪽과 같다.
-        assertTrue(last.told.map { it.destination }.containsAll(listOf(ScenarioSongpa.SEOKCHON, ScenarioSongpa.BANGI)))
+        assertTrue(last.told.map { it.destination }.containsAll(listOf(ScenarioSongpa.SEOKCHON, ScenarioSongpa.BANGI)), "told=${last.told.map { it.destination.name }} spoken=$spoken")
         assertSides(run)
     }
 

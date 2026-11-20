@@ -27,6 +27,7 @@ import io.github.hyunolike.ontime.fake.track.ReplayVehicle
 import io.github.hyunolike.ontime.tour.FileCache
 import io.github.hyunolike.ontime.tour.TourApiClient
 import io.github.hyunolike.ontime.tour.TourCatalog
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import io.github.hyunolike.ontime.fake.track.TrackPlayer
@@ -58,7 +59,15 @@ object Platform {
         val drive = ReplayBackedNavi(navi, player)
         // 주행은 재생기, 충전은 실제 차량 값. 에뮬레이터에서 충전구를 열 수 없으면 `poc charge`로 시험 값을 켠다.
         val docentVehicle = ReplayVehicle(player, vehicle)
-        val tracker = AheadTracker(ScenarioSongpa.pois)
+        val tracker = AheadTracker(ScenarioSongpa.pois, passedOnRoute = { player.hasPassed(it.destination) })
+        // 위치 출처. 재생(기본) 또는 실제 위치(FusedLocation, 에뮬레이터에서는 tools/geo-drive.py가 좌표를 넣음).
+        val modeChip = MutableStateFlow<String?>(null)
+        val modeNote = MutableStateFlow<String?>(null)
+        var live = false
+        var followJob: Job? = null
+        fun startFollowing() {
+            followJob = scope.launch { player.follow(location.fixes) }
+        }
         // local.properties에 TourAPI 키가 있으면 경로를 따라 관광공사 관광지를 더한다. 실패하면 내장 목록만 쓴다.
         BuildConfig.TOURAPI_KEY.takeIf { it.isNotEmpty() }?.let { key ->
             scope.launch {
@@ -123,14 +132,31 @@ object Platform {
                 catalog = { tracker.places },
                 remember = true,
                 reset = {
+                    followJob?.cancel()
+                    followJob?.join()
+                    followJob = null
                     drive.reset()
                     tracker.reset()
                     docentVehicle.simulateCharging(false)
+                    if (live) startFollowing()
                 },
+                modeChip = modeChip,
+                modeNote = modeNote,
             ),
             poc = { name ->
                 // charge — 충전 시험 값을 켜고 끈다. 충전 대기 화면을 에뮬레이터에서 보여 주기 위해서다.
                 if (name == "charge") docentVehicle.simulateCharging(!docentVehicle.simulatingCharge)
+                // location-live, location-replay — 위치 출처를 바꾼다. 바꾼 뒤 앱이 처음부터 다시 시작한다(OnTimeRuntime.poc).
+                if (name == "location-live" || name == "location-replay") {
+                    live = name == "location-live"
+                    modeChip.value = if (live) "에뮬레이터 GPS" else null
+                    modeNote.value = if (live) {
+                        "위치는 FusedLocation SDK에서 받습니다. 에뮬레이터에 송파 경로 좌표를 넣어 움직이고, 경로와 경유지는 실제 내비에 보냅니다."
+                    } else {
+                        null
+                    }
+                    android.util.Log.i("OnTimePleos", "-> location ${if (live) "live" else "replay"}")
+                }
                 // route:위도,경도 — 그곳으로 경로를 잡는다. 시연 경로의 거리와 회전을 재는 데 쓴다.
                 if (name.startsWith("route:")) {
                     val (lat, lon) = name.removePrefix("route:").split(",").map { it.trim().toDouble() }

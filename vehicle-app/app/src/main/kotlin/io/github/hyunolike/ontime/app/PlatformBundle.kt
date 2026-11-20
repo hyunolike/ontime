@@ -68,6 +68,9 @@ class DocentBundle(
     val reset: (suspend () -> Unit)? = null,
     /** 들를지 묻고 기다리는 시간. 실제 음성은 무응답이면 답을 주지 않으므로 정해 둔다. */
     val askWindow: kotlin.time.Duration = kotlin.time.Duration.INFINITE,
+    /** 위치 출처가 바뀌면(실제 위치 모드) 칩과 설명을 이 값으로 바꾼다. null이면 위의 기본 문구. */
+    val modeChip: StateFlow<String?> = MutableStateFlow(null),
+    val modeNote: StateFlow<String?> = MutableStateFlow(null),
 )
 
 class PlacePhoto(@DrawableRes val resource: Int, val credit: String)
