@@ -4,6 +4,7 @@ import io.github.hyunolike.ontime.fake.ScenarioSongpa
 import io.github.hyunolike.ontime.platform.Fix
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class OnFootTest {
     private val atMuseum = Fix(ScenarioSongpa.HANSEONG.latitude, ScenarioSongpa.HANSEONG.longitude, null, 0.0)
@@ -14,6 +15,12 @@ class OnFootTest {
         assertEquals(listOf(ScenarioSongpa.MONGCHON, ScenarioSongpa.BANGI), walkable.map { it.poi.destination })
         // 777m와 908m. 굴곡 1.3배, 초속 1.2m로 15분, 17분.
         assertEquals(listOf(15, 17), walkable.map { it.walkMinutes })
+    }
+
+    @Test
+    fun `지금 서 있는 곳은 걸어서 갈 곳에 넣지 않는다`() {
+        val atSeokchon = Fix(ScenarioSongpa.SEOKCHON.latitude, ScenarioSongpa.SEOKCHON.longitude, null, 0.0)
+        assertTrue(nearbyOnFoot(atSeokchon, ScenarioSongpa.pois).none { it.poi.destination == ScenarioSongpa.SEOKCHON })
     }
 
     @Test
