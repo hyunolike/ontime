@@ -1,7 +1,7 @@
 # 웹 체험판 (web-demo) 명세와 설계
 
 - 작성일: 2026-11-20
-- 상태: 공개 (https://gilbeot-three.vercel.app, 2026-11-20)
+- 상태: 공개 (https://gilbeot.hyunolike.dev, 2026-11-20)
 
 ## 1. 문제
 
@@ -36,11 +36,12 @@
 
 Vercel 프로젝트 `gilbeot`(hyunho-jangs-projects)로 공개한다. 주소는 https://gilbeot-three.vercel.app 이다(`gilbeot.vercel.app`은 이미 쓰이고 있어 Vercel이 정한 이름). 처음에 GitHub Pages로 공개했다가 사용자 요청으로 Vercel로 옮기고 Pages는 껐다(2026-11-20).
 
-`web/`을 바꾼 뒤 다시 배포한다. 정적 파일이라 빌드 설정이 없다.
+주소는 https://gilbeot.hyunolike.dev 다(`hyunolike.dev`의 네임서버가 Vercel이라 하위 도메인을 바로 붙였다). Vercel이 정한 https://gilbeot-three.vercel.app 도 같은 곳을 가리킨다.
+
+Vercel 프로젝트를 이 저장소와 연결하고 루트 폴더를 `web`으로 두었다. `main`에 push하면 프로덕션, 다른 브랜치는 미리보기로 자동 배포된다. 정적 파일이라 빌드 설정이 없다. 앱 판단이 바뀌었으면 기록을 다시 뽑아 함께 올린다.
 
 ```bash
-cd vehicle-app && ./gradlew :web-export:run   # 앱 판단이 바뀌었으면 기록을 다시 뽑는다
-cd ../web && vercel deploy --prod --yes --project gilbeot
+cd vehicle-app && ./gradlew :web-export:run
 ```
 
 ## 6. 검증
