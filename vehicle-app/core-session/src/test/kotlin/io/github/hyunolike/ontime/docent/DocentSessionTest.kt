@@ -13,6 +13,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -32,6 +33,57 @@ class DocentSessionTest {
         advanceUntilIdle()
         runCurrent()
         return states to player
+    }
+
+    /** 말로 답하지 않거나 알아듣지 못하는 음성. 답이 없으면 null을 준다. */
+    private class SilentVoice : io.github.hyunolike.ontime.platform.SpeechGateway {
+        override suspend fun say(text: String) = kotlinx.coroutines.delay(1.seconds)
+        override suspend fun askYesNo(prompt: String): Boolean = listenYesNo(prompt) == true
+        override suspend fun listenYesNo(prompt: String): Boolean? {
+            say(prompt)
+            kotlinx.coroutines.delay(3.seconds)
+            return null
+        }
+    }
+
+    @Test
+    fun `음성 답이 없으면 질문을 닫지 않고 버튼 답을 기다리고 정한 시간이 지나면 지나간다`() = runTest {
+        for (press in listOf(true, false)) {
+            val player = DocentPlayer(ScenarioGyeongju.scenario)
+            val session = DocentSession(player, player, player, SilentVoice(), player, player, askWindow = 7.seconds)
+            val states = mutableListOf<DocentState>()
+            val runJob = launch { session.run() }
+            val collectJob = launch { session.state.collect { it?.let(states::add) } }
+            val driveJob = launch { player.run() }
+            while (states.lastOrNull()?.narration?.phase != NarrationPhase.ASKING) advanceTimeBy(200)
+            // 음성이 답 없이 끝난(1초 + 3초) 뒤에도 질문은 열려 있다. 대릉원 앞 우회전까지는 약 10초 남아 있다.
+            advanceTimeBy(5_000)
+            assertEquals(NarrationPhase.ASKING, states.last().narration?.phase)
+            if (press) {
+                session.answer(true)
+                runCurrent()
+                assertEquals(ScenarioGyeongju.DAEREUNGWON, states.last().waypoint)
+            } else {
+                // 7초가 지나면 들르지 않고 질문을 닫는다.
+                advanceTimeBy(2_500)
+                assertEquals(null, states.last().narration)
+                assertEquals(null, states.last().waypoint)
+            }
+            listOf(runJob, collectJob, driveJob).forEach { it.cancel() }
+        }
+    }
+
+    @Test
+    fun `좌석 안내를 켜면 오른쪽 장소에만 조수석 쪽이라고 덧붙인다`() = runTest {
+        val speech = ScriptedSpeech(answer = false, answerDelay = 4.seconds, sayDelay = 3.5.seconds)
+        val player = DocentPlayer(ScenarioGyeongju.scenario)
+        val session = DocentSession(player, player, player, speech, player, player, seatHint = true)
+        backgroundScope.launch { session.run() }
+        launch { player.run() }
+        advanceUntilIdle()
+        val stories = speech.spoken.value.filter { it.contains("뒤") }
+        assertTrue(stories.first { it.contains("대릉원") }.startsWith("5분 뒤 오른쪽, 조수석 쪽에 대릉원."))
+        assertTrue(stories.first { it.contains("첨성대") }.startsWith("4분 뒤 왼쪽에 첨성대."))
     }
 
     @Test

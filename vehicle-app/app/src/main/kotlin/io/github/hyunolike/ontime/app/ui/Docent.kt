@@ -24,6 +24,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -34,6 +36,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import io.github.hyunolike.ontime.app.DocentBundle
 import io.github.hyunolike.ontime.app.PlacePhoto
+import io.github.hyunolike.ontime.design.R as DesignR
 import io.github.hyunolike.ontime.design.component.Button
 import io.github.hyunolike.ontime.design.component.ButtonVariant
 import io.github.hyunolike.ontime.design.component.Card
@@ -68,7 +71,9 @@ import io.github.hyunolike.ontime.slack.Source
 private typealias Photos = Map<String, PlacePhoto>
 
 @Composable
-private fun Photos.painter(id: String?): Painter? = this[id]?.let { painterResource(it.resource) }
+private fun Photos.painter(id: String?): Painter =
+    // 사진이 없는 곳(서울공항, 관광공사 데이터 등)은 빈 판 대신 차분한 길 그림을 깐다.
+    painterResource(this[id]?.resource ?: DesignR.drawable.img_place_placeholder)
 
 /** 큰 사진의 오른쪽 위에 저작자와 이용 조건을 작게 적는다. 작은 사진에는 붙이지 않는다. */
 @Composable
@@ -121,6 +126,8 @@ private fun DocentHeader(docent: DocentBundle, state: DocentState, trailing: Str
 @Composable
 fun DocentDrivingScreen(state: DocentState, docent: DocentBundle, onAnswer: (Boolean) -> Unit) {
     val photos = docent.photos
+    // 서버 등록이 끝나야 "말해도 됩니다"를 보여 준다.
+    val voice by docent.voice.collectAsState()
     Column(
         Modifier.fillMaxSize().padding(horizontal = Size.screenPadding, vertical = Space.xxl),
         verticalArrangement = Arrangement.spacedBy(Space.xl),
@@ -147,7 +154,7 @@ fun DocentDrivingScreen(state: DocentState, docent: DocentBundle, onAnswer: (Boo
             val quiet = rememberLast(state.quiet.takeIf { current == "quiet" })
             when {
                 quiet != null -> QuietScene(quiet, state.upcoming.firstOrNull())
-                narration != null -> StoryScene(narration, photos, docent.voice, onAnswer)
+                narration != null -> StoryScene(narration, photos, voice, onAnswer)
                 else -> IdleScene(state, photos, docent.straightLine, nextId = current.substringAfter("idle:", "").takeIf { it != "null" && it.isNotEmpty() })
             }
         }
@@ -202,9 +209,17 @@ private fun StoryScene(narration: Narration, photos: Photos, voice: Boolean, onA
             Text("${narration.lead} ${ahead.side.word()} 창밖".trim(), style = type.title, color = colors.accent, maxLines = 1)
         }
         Text(name, style = if (name.length <= 4) type.display else type.displaySmall, maxLines = 1)
+        // 운전석이 왼쪽이라 오른쪽 창밖은 동승자가 보기 좋다. 운전자에게 고개를 돌리라고 하지 않으려고 왼쪽에는 적지 않는다.
+        if (ahead.side == Side.RIGHT && narration.phase == NarrationPhase.TELLING) {
+            Text("조수석에서 잘 보여요", style = type.body, color = colors.accent, maxLines = 1)
+        }
         when (narration.phase) {
             // 해설은 음성으로 나간다. 화면에는 동승자가 읽을 수 있게 세 줄까지만 둔다.
-            NarrationPhase.TELLING -> Text(ahead.poi.story, style = type.bodyLarge, color = colors.textSecondary, maxLines = 3)
+            NarrationPhase.TELLING -> {
+                Text(narration.story.ifEmpty { ahead.poi.story }, style = type.bodyLarge, color = colors.textSecondary, maxLines = 3)
+                // 관광공사 데이터로 들어온 해설은 출처를 밝힌다(공공누리).
+                if (ahead.poi.source == Source.LIVE) Text("해설 출처 한국관광공사", style = type.caption, color = colors.textSecondary, maxLines = 1)
+            }
             NarrationPhase.ASKING -> {
                 // 들를지 정하는 데 필요한 것만: 가면 무엇을 하는지, 도착이 얼마나 늦어지는지.
                 Row(horizontalArrangement = Arrangement.spacedBy(Space.md), verticalAlignment = Alignment.CenterVertically) {
@@ -317,6 +332,8 @@ fun DocentStoppedScreen(
     /** 예시 드라이브를 시작하거나 이어 간다. 재생이 없는 빌드에서는 null. */
     onDrive: (() -> Unit)?,
     onGuide: (String) -> Unit,
+    /** 처음부터 다시. 되돌릴 수 없는 빌드에서는 null. */
+    onRestart: (() -> Unit)? = null,
 ) {
     val wide = LocalWideLayout.current
     val photos = docent.photos
@@ -327,11 +344,11 @@ fun DocentStoppedScreen(
         if (wide) {
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(Space.xxl)) {
                 Column(Modifier.weight(1.15f).fillMaxHeight().verticalScroll(rememberScrollState())) { PlacesPane(state, photos, straight, onGuide) }
-                Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState())) { TripPane(state, docent, started, onDrive) }
+                Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState())) { TripPane(state, docent, started, onDrive, onRestart) }
             }
         } else {
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(Space.xl)) {
-                TripPane(state, docent, started, onDrive)
+                TripPane(state, docent, started, onDrive, onRestart)
                 PlacesPane(state, photos, straight, onGuide)
             }
         }
@@ -418,7 +435,7 @@ private fun PlaceRow(poi: Poi, ahead: PoiAhead?, state: DocentState, photos: Pho
 }
 
 @Composable
-private fun TripPane(state: DocentState, docent: DocentBundle, started: Boolean, onDrive: (() -> Unit)?) {
+private fun TripPane(state: DocentState, docent: DocentBundle, started: Boolean, onDrive: (() -> Unit)?, onRestart: (() -> Unit)?) {
     val photos = docent.photos
     val colors = OnTimeTheme.colors
     val type = OnTimeTheme.type
@@ -447,6 +464,11 @@ private fun TripPane(state: DocentState, docent: DocentBundle, started: Boolean,
         }
 
         StampStrip(state)
+        if (state.walkable.isNotEmpty()) ChargeWalkCard(state, photos)
+        // 시연을 반복할 수 있게, 한 번이라도 출발했으면 처음으로 되돌리는 버튼을 둔다.
+        if (onRestart != null && (started || state.told.isNotEmpty() || state.stamps.isNotEmpty())) {
+            Button("처음부터 다시", onRestart, Modifier.fillMaxWidth(), variant = ButtonVariant.Secondary, icon = OnTimeIcon.Restart)
+        }
 
         if (onDrive != null && !finished) {
             when {
@@ -465,11 +487,55 @@ private fun TripPane(state: DocentState, docent: DocentBundle, started: Boolean,
     }
 }
 
+/** 충전하는 동안 걸어서 둘러볼 곳. 충전 중이고 차가 서 있을 때만 보인다. */
+@Composable
+private fun ChargeWalkCard(state: DocentState, photos: Photos) {
+    val colors = OnTimeTheme.colors
+    val type = OnTimeTheme.type
+    Card(Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(Space.md)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(Space.md), verticalAlignment = Alignment.CenterVertically) {
+                Icon(OnTimeIcon.Charger, tint = colors.positive)
+                // 앞의 충전 아이콘이 "충전하는 동안"을 대신한다. 좁은 화면에서도 한 줄에 들어가게 짧게 둔다.
+                Text("걸어서 둘러볼 곳", Modifier.weight(1f), style = type.title, maxLines = 1)
+                state.charge.batteryPercent?.let {
+                    Icon(OnTimeIcon.Battery, tint = colors.textSecondary)
+                    Text("${it}%", style = type.label, color = colors.textSecondary, maxLines = 1)
+                }
+                // 에뮬레이터에서 시험 값으로 켠 충전이면 그렇다고 밝힌다.
+                if (state.charge.simulated) Chip("충전 시험", icon = OnTimeIcon.Play)
+            }
+            state.walkable.forEach { walk ->
+                Row(horizontalArrangement = Arrangement.spacedBy(Space.lg), verticalAlignment = Alignment.CenterVertically) {
+                    Photo(photos.painter(walk.poi.destination.id), description = null, modifier = Modifier.size(72.dp), radius = Radius.md)
+                    Column(Modifier.weight(1f)) {
+                        Text(walk.poi.destination.name, style = type.bodyLarge, maxLines = 1)
+                        if (walk.poi.highlight.isNotEmpty()) Text(walk.poi.highlight, style = type.label, color = colors.textSecondary, maxLines = 1)
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(Space.xs), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(OnTimeIcon.Walk, tint = colors.textSecondary)
+                        Text("걸어서 ${walk.walkMinutes}분", style = type.label, color = colors.textSecondary, maxLines = 1)
+                    }
+                }
+            }
+        }
+    }
+}
+
 /** 들를 수 있는 곳마다 도장 자리를 하나씩 둔다. 차를 세워 들른 곳만 채워진다. */
 @Composable
 private fun StampStrip(state: DocentState) {
     val colors = OnTimeTheme.colors
-    val places = (state.told + state.ahead.map { it.poi }).filter { it.canStop }.map { it.destination }.distinct()
+    // 관광공사 장소가 늘어도 칸이 넘치지 않게 네 칸까지만 둔다. 도장 찍은 곳, 들르러 가는 곳, 들은 곳, 가까운 곳 순서다.
+    val candidates = (state.told + state.ahead.map { it.poi }).filter { it.canStop }.map { it.destination }.distinct()
+    val places = candidates.sortedBy {
+        when {
+            it in state.stamps -> 0
+            it == state.heading -> 1
+            state.told.any { t -> t.destination == it } -> 2
+            else -> 3
+        }
+    }.take(MAX_STAMPS)
     Card(Modifier.fillMaxWidth()) {
         Row(horizontalArrangement = Arrangement.spacedBy(Space.xl), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Space.xs)) {
@@ -494,3 +560,5 @@ private fun StampStrip(state: DocentState) {
         }
     }
 }
+
+private const val MAX_STAMPS = 4

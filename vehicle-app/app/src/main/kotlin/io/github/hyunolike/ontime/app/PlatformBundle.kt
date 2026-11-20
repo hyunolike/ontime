@@ -1,7 +1,11 @@
 package io.github.hyunolike.ontime.app
 
 import androidx.annotation.DrawableRes
+import io.github.hyunolike.ontime.platform.LocationGateway
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import io.github.hyunolike.ontime.platform.NaviGateway
+import io.github.hyunolike.ontime.platform.Poi
 import io.github.hyunolike.ontime.platform.RoadGateway
 import io.github.hyunolike.ontime.platform.StoryGateway
 import io.github.hyunolike.ontime.platform.SpeechGateway
@@ -42,7 +46,7 @@ class DocentBundle(
     /** 장소 id별 사진. 예시 빌드는 앱에 넣어 둔 사진을, 실제 빌드는 관광 데이터의 대표 사진을 쓴다. */
     val photos: Map<String, PlacePhoto> = emptyMap(),
     /** 음성으로 묻고 답할 수 있으면 true. false면 화면에 "말해도 된다"는 안내를 내지 않는다. */
-    val voice: Boolean = false,
+    val voice: StateFlow<Boolean> = MutableStateFlow(false),
     /** 재생 값을 쓰고 있다는 표시. 넓은 화면과 좁은 화면용. */
     val replayChip: String = "예시 데이터 재생",
     val replayChipShort: String = "예시 데이터",
@@ -54,6 +58,16 @@ class DocentBundle(
     val straightLine: Boolean = false,
     /** 회전이 이 거리 안이면 새 이야기를 꺼내지 않는다. 직선 거리로 쪽을 정하는 빌드는 회전 뒤 쪽이 뒤집힐 수 있어 넓게 둔다. */
     val quietWithin: Int = 400,
+    /** 충전하는 동안 걸어서 둘러볼 곳을 고를 때 쓰는 지금 위치. 없으면 그 카드를 보여 주지 않는다. */
+    val walkFrom: LocationGateway? = null,
+    /** 이 길의 장소 전부. 충전 대기와 이어 가기에 쓴다. */
+    val catalog: () -> List<Poi> = { emptyList() },
+    /** 들은 곳과 도장을 저장해 앱이 다시 시작돼도 이어 가면 true. 시연을 반복하는 예시 빌드는 끈다. */
+    val remember: Boolean = false,
+    /** 재생과 내비 경유지, 위치 추적을 출발 전으로 되돌린다. 없으면 "처음부터 다시"를 보여 주지 않는다. */
+    val reset: (suspend () -> Unit)? = null,
+    /** 들를지 묻고 기다리는 시간. 실제 음성은 무응답이면 답을 주지 않으므로 정해 둔다. */
+    val askWindow: kotlin.time.Duration = kotlin.time.Duration.INFINITE,
 )
 
 class PlacePhoto(@DrawableRes val resource: Int, val credit: String)

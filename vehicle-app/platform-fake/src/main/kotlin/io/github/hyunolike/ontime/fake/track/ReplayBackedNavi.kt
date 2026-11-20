@@ -76,6 +76,17 @@ class ReplayBackedNavi(
 
     override suspend fun removeWaypoint(): Boolean = safely { primary.removeWaypoint() }
 
+    /**
+     * 처음부터 다시 한다. 내비에 넣어 둔 경유지가 있으면 지우고 재생기를 출발 전으로 되돌린다.
+     * 다음 출발 때 경로를 다시 확인한다.
+     */
+    suspend fun reset() {
+        if (visited || player.hasStop) safely { primary.removeWaypoint() }
+        visited = false
+        routed = false
+        player.reset()
+    }
+
     override suspend fun estimateRemainingDrive(to: Destination): Duration? =
         runCatching { primary.estimateRemainingDrive(to) }.getOrNull()
 

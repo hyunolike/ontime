@@ -37,7 +37,7 @@ import kotlinx.coroutines.flow.flowOf
  *   꺼내지 않는다(`DocentSession`의 `quietWithin`).
  */
 class AheadTracker(
-    private val catalog: List<Poi>,
+    private var catalog: List<Poi>,
     private val cone: Double = 70.0,
     private val behind: Double = 100.0,
     private val radius: Int = 5_000,
@@ -52,6 +52,24 @@ class AheadTracker(
 
     /** 가장 가까웠던 거리. */
     private val closest = mutableMapOf<String, Int>()
+
+    /** 지금 쓰는 장소 목록. */
+    val places: List<Poi> get() = catalog
+
+    /**
+     * 장소 목록을 바꾼다(관광공사 데이터가 늦게 도착한 경우). 지나친 곳과 가장 가까웠던 거리는 id로 기억하므로 유지된다.
+     * [update]와 같은 스레드에서 불러야 한다.
+     */
+    fun setCatalog(places: List<Poi>) {
+        catalog = places
+    }
+
+    /** 지나친 곳과 진행 방향 기억을 지운다. 같은 길을 처음부터 다시 달릴 때 쓴다. */
+    fun reset() {
+        trusted = null
+        passed.clear()
+        closest.clear()
+    }
 
     /** [nextTurn]은 앞에 있는 다음 좌회전이나 우회전. 모르면 null. */
     fun update(fix: Fix, nextTurn: Maneuver? = null): List<PoiAhead> {

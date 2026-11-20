@@ -2,7 +2,10 @@ package io.github.hyunolike.ontime.pleos
 
 import ai.pleos.playground.vehicle.Vehicle
 import ai.pleos.playground.vehicle.constant.control.VehicleGear
+import ai.pleos.playground.vehicle.listener.EvBatteryStateOfChargeListener
+import ai.pleos.playground.vehicle.listener.EvChargePortOpenListener
 import ai.pleos.playground.vehicle.listener.GearSelectionListener
+import io.github.hyunolike.ontime.platform.ChargeState
 import android.content.Context
 import io.github.hyunolike.ontime.platform.VehicleGateway
 import kotlin.time.Duration.Companion.seconds
@@ -21,6 +24,33 @@ class PleosVehicle(context: Context, private val scope: CoroutineScope) : Vehicl
     private val _driving = MutableStateFlow(true)
 
     override val driving: Flow<Boolean> = _driving
+
+    private val _charge = MutableStateFlow(ChargeState.NONE)
+
+    /** 충전구가 열려 있으면 충전 중으로 본다. 지원하지 않거나 권한이 없으면 늘 충전하지 않는 것으로 둔다. */
+    override val charge: Flow<ChargeState> = _charge
+
+    private val portListener = object : EvChargePortOpenListener {
+        override fun onEvChargePortOpenUpdated(open: Boolean?) {
+            PleosLog.event("onEvChargePortOpenUpdated", open.toString())
+            _charge.value = _charge.value.copy(charging = open == true)
+        }
+
+        override fun onFailed(e: Exception) {
+            PleosLog.error("EvChargePortOpenListener", e)
+        }
+    }
+
+    private val socListener = object : EvBatteryStateOfChargeListener {
+        override fun onEvBatteryStateOfChargeUpdated(percent: Int?) {
+            PleosLog.event("onEvBatteryStateOfChargeUpdated", percent.toString())
+            _charge.value = _charge.value.copy(batteryPercent = percent)
+        }
+
+        override fun onFailed(e: Exception) {
+            PleosLog.error("EvBatteryStateOfChargeListener", e)
+        }
+    }
 
     private val listener = object : GearSelectionListener {
         override fun onSelected(gear: VehicleGear?) {
@@ -56,6 +86,29 @@ class PleosVehicle(context: Context, private val scope: CoroutineScope) : Vehicl
             }
         }
         gear.registerGearSelection(listener)
+        startCharge()
+    }
+
+    private fun startCharge() {
+        runCatching {
+            val battery = vehicle.getEvBattery()
+            battery.isEvChargePortOpen(
+                { open ->
+                    PleosLog.event("isEvChargePortOpen", open.toString())
+                    _charge.value = _charge.value.copy(charging = open == true)
+                },
+                { cause -> PleosLog.error("isEvChargePortOpen", cause) },
+            )
+            battery.getEvBatteryStateOfCharge(
+                { percent ->
+                    PleosLog.event("getEvBatteryStateOfCharge", percent.toString())
+                    _charge.value = _charge.value.copy(batteryPercent = percent)
+                },
+                { cause -> PleosLog.error("getEvBatteryStateOfCharge", cause) },
+            )
+            battery.registerEvChargePortOpen(portListener)
+            battery.registerEvBatteryStateOfCharge(socListener)
+        }.onFailure { PleosLog.error("EvBattery", it) }
     }
 
     fun stop() {

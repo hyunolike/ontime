@@ -3,6 +3,7 @@ package io.github.hyunolike.ontime.docent
 import io.github.hyunolike.ontime.fake.ScenarioSongpa
 import io.github.hyunolike.ontime.fake.ScriptedSpeech
 import io.github.hyunolike.ontime.fake.track.ReplayBackedNavi
+import io.github.hyunolike.ontime.fake.track.ReplayVehicle
 import io.github.hyunolike.ontime.fake.track.TrackPlayer
 import io.github.hyunolike.ontime.platform.Destination
 import io.github.hyunolike.ontime.platform.NaviGateway
@@ -23,6 +24,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -67,19 +69,26 @@ class SongpaDriveTest {
         val primary: RecordingNavi,
         val player: TrackPlayer,
         val session: DocentSession,
+        val vehicle: ReplayVehicle,
+        val tracker: AheadTracker,
     )
 
-    private fun TestScope.start(speech: SpeechGateway): Run {
+    private fun TestScope.start(speech: SpeechGateway, memory: DocentMemory? = null): Run {
         val player = TrackPlayer(ScenarioSongpa.track, Instant.parse("2026-12-05T01:00:00Z"))
         val primary = RecordingNavi()
         val navi = ReplayBackedNavi(primary, player)
-        val stories = LiveStories(player, AheadTracker(ScenarioSongpa.pois), player.nextTurn)
-        val session = DocentSession(player, navi, player, speech, player, stories, quietWithin = 600)
+        val tracker = AheadTracker(ScenarioSongpa.pois)
+        val stories = LiveStories(player, tracker, player.nextTurn)
+        val vehicle = ReplayVehicle(player)
+        val session = DocentSession(
+            player, navi, vehicle, speech, player, stories,
+            quietWithin = 600, walkFrom = player, catalog = { ScenarioSongpa.pois }, memory = memory,
+        )
         val states = mutableListOf<DocentState>()
         backgroundScope.launch { session.run() }
         backgroundScope.launch { session.state.collect { it?.let(states::add) } }
         runCurrent()
-        return Run(states, navi, primary, player, session)
+        return Run(states, navi, primary, player, session, vehicle, tracker)
     }
 
     private fun TestScope.driveToNextStop(run: Run) {
@@ -89,27 +98,27 @@ class SongpaDriveTest {
     }
 
     @Test
-    fun `내비 값이 없어도 첫 상태가 곧바로 나오고 출발 전에 세 곳이 모두 보인다`() = runTest {
+    fun `내비 값이 없어도 첫 상태가 곧바로 나오고 출발 전에 네 곳이 모두 보인다`() = runTest {
         val run = start(ScriptedSpeech(answer = false, answerDelay = 10.seconds, sayDelay = 3.5.seconds))
         val first = run.states.last()
         assertFalse(first.driving)
         assertEquals(Source.REPLAY, first.source)
         assertEquals(ScenarioSongpa.HANSEONG, first.destination)
         assertEquals(
-            listOf(ScenarioSongpa.SEOUL_AIRBASE, ScenarioSongpa.SEOKCHON, ScenarioSongpa.BANGI),
+            listOf(ScenarioSongpa.SEOUL_AIRBASE, ScenarioSongpa.SEOKCHON, ScenarioSongpa.BANGI, ScenarioSongpa.MONGCHON),
             first.ahead.map { it.poi.destination },
         )
     }
 
     @Test
-    fun `들르지 않으면 세 곳을 차례로 모두 들려주고 목적지에서 남은 시간이 0이 된다`() = runTest {
+    fun `들르지 않으면 네 곳을 차례로 모두 들려주고 목적지에서 남은 시간이 0이 된다`() = runTest {
         val spoken = mutableListOf<String>()
         val run = start(AnswerAt(yesFor = null, spokenLog = spoken))
         driveToNextStop(run)
 
         val last = run.states.last()
         assertEquals(
-            listOf(ScenarioSongpa.SEOUL_AIRBASE, ScenarioSongpa.SEOKCHON, ScenarioSongpa.BANGI),
+            listOf(ScenarioSongpa.SEOUL_AIRBASE, ScenarioSongpa.SEOKCHON, ScenarioSongpa.BANGI, ScenarioSongpa.MONGCHON),
             last.told.map { it.destination },
         )
         // 주행 중 언제든 아직 소개하지 않은 곳이 남아 있으면 목록에서 사라지지 않는다.
@@ -200,6 +209,82 @@ class SongpaDriveTest {
         assertTrue(run.states.any { it.narration?.ahead?.poi?.destination == ScenarioSongpa.BANGI && it.narration?.phase == NarrationPhase.ASKING && it.driving })
     }
 
+    @Test
+    fun `목적지에 서서 충전하면 걸어서 둘러볼 곳을 걷는 시간과 함께 보여 준다`() = runTest {
+        val run = start(ScriptedSpeech(answer = false, answerDelay = 10.seconds, sayDelay = 3.5.seconds))
+        driveToNextStop(run)
+        assertTrue(run.states.last().walkable.isEmpty(), "충전하지 않으면 목록이 없다")
+
+        run.vehicle.simulateCharging(true)
+        runCurrent()
+        val charging = run.states.last()
+        assertTrue(charging.charge.charging && charging.charge.simulated)
+        assertEquals(listOf(ScenarioSongpa.MONGCHON, ScenarioSongpa.BANGI), charging.walkable.map { it.poi.destination })
+        // 재생 경로는 박물관 좌표보다 약 75m 앞, 도로 위에서 끝난다. 그래서 박물관에서 잰 15분, 17분보다 1분씩 짧다.
+        assertEquals(listOf(14, 16), charging.walkable.map { it.walkMinutes })
+
+        run.vehicle.simulateCharging(false)
+        runCurrent()
+        assertTrue(run.states.last().walkable.isEmpty())
+    }
+
+    @Test
+    fun `달리는 동안에는 충전 중이어도 걸어서 갈 곳을 보여 주지 않는다`() = runTest {
+        val run = start(ScriptedSpeech(answer = false, answerDelay = 10.seconds, sayDelay = 3.5.seconds))
+        run.vehicle.simulateCharging(true)
+        launch { run.navi.drive() }
+        advanceTimeBy(30_000)
+        runCurrent()
+        assertTrue(run.states.filter { it.driving }.all { it.walkable.isEmpty() })
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun `앱이 다시 시작되면 들은 곳과 도장을 이어 가고 같은 곳을 다시 소개하지 않는다`() = runTest {
+        val spoken = mutableListOf<String>()
+        val first = start(AnswerAt(yesFor = "석촌동", spokenLog = spoken))
+        driveToNextStop(first)
+        val saved = DocentMemory.decode(first.session.snapshot()!!.encode())!!
+        assertEquals(listOf(ScenarioSongpa.SEOKCHON.id), saved.stampIds)
+
+        spoken.clear()
+        val again = start(AnswerAt(yesFor = null, spokenLog = spoken), memory = saved)
+        val restored = again.states.last()
+        assertEquals(listOf(ScenarioSongpa.SEOKCHON), restored.stamps)
+        assertEquals(saved.toldIds, restored.told.map { it.destination.id })
+        driveToNextStop(again)
+        // 이미 들은 서울공항과 석촌동은 다시 말하지 않는다.
+        assertTrue(spoken.none { it.contains("서울공항") || it.contains("석촌동") }, spoken.toString())
+        assertTrue(spoken.any { it.contains("방이동") })
+    }
+
+    @Test
+    fun `목적지가 다르면 저장한 상태를 쓰지 않는다`() = runTest {
+        val run = start(ScriptedSpeech(answer = false), memory = DocentMemory("other", listOf(ScenarioSongpa.SEOUL_AIRBASE.id), emptyList()))
+        assertTrue(run.states.last().told.isEmpty())
+    }
+
+    @Test
+    fun `처음부터 다시 하면 경유지를 지우고 출발 전으로 돌아간다`() = runTest {
+        val spoken = mutableListOf<String>()
+        val run = start(AnswerAt(yesFor = "석촌동", spokenLog = spoken))
+        driveToNextStop(run)
+        assertTrue(run.player.atVisitedStop)
+        run.navi.reset()
+        run.tracker.reset()
+        run.session.reset()
+        runCurrent()
+        val fresh = run.states.last()
+        assertTrue(fresh.told.isEmpty() && fresh.stamps.isEmpty() && fresh.waypoint == null)
+        assertFalse(fresh.driving)
+        assertEquals("remove", run.primary.calls.last())
+        // 다시 출발하면 경로를 다시 요청하고 서울공항부터 다시 들려준다.
+        spoken.clear()
+        driveToNextStop(run)
+        assertEquals("route:songpa-hanseong", run.primary.calls[run.primary.calls.lastIndexOf("remove") + 1])
+        assertTrue(spoken.first().contains("서울공항"))
+    }
+
     private fun assertSides(run: Run) {
         val sides = run.states.mapNotNull { it.narration?.ahead }.associate { it.poi.destination to it.side }
         // 들른 곳 말고는 모두 실제로 소개돼야 한다. 소개되지 않으면 쪽을 확인할 것도 없다.
@@ -208,6 +293,8 @@ class SongpaDriveTest {
         sides[ScenarioSongpa.SEOUL_AIRBASE]?.let { assertEquals(Side.RIGHT, it) }
         sides[ScenarioSongpa.SEOKCHON]?.let { assertEquals(Side.LEFT, it) }
         sides[ScenarioSongpa.BANGI]?.let { assertEquals(Side.LEFT, it, "방이동 고분군") }
+        // 경로선에 수선을 내려 잰 쪽: 몽촌토성은 목적지 앞에서 왼쪽이다.
+        sides[ScenarioSongpa.MONGCHON]?.let { assertEquals(Side.LEFT, it, "몽촌토성") }
     }
 
     @Test

@@ -137,6 +137,8 @@ adb shell am start -n io.github.hyunolike.ontime/io.github.hyunolike.ontime.app.
 | 아이콘 16종 | Google Material Symbols Rounded | Apache License 2.0 |
 | 도슨트 아이콘 7종 (좌우 창밖, 이야기, 쉼, 도장, 경유지, 길) | Codex로 만든 벡터 | 자체 제작 |
 | 앱 아이콘 | Codex로 만든 벡터 | 자체 제작 |
+| 배터리, 조수석, 다시 시작, 음성 해설 아이콘 4종 | Codex로 만든 벡터 | 자체 제작 |
+| 장소 사진 대체 그림 (`img_place_placeholder`) | Codex로 만든 벡터 | 자체 제작 |
 | 대릉원 사진 ([Daereungwon Tomb Complex.jpg](https://commons.wikimedia.org/wiki/File:Daereungwon_Tomb_Complex.jpg)) | Wikimedia Commons, Bernard Gagnon | CC0 1.0 |
 | 첨성대 사진 ([Cheomseongdae astronomical observatory.jpg](https://commons.wikimedia.org/wiki/File:Cheomseongdae_astronomical_observatory.jpg)) | Wikimedia Commons, Dudva | CC0 1.0 |
 | 불국사 사진 ([Daeungjeon, Bulguksa 01.jpg](https://commons.wikimedia.org/wiki/File:Daeungjeon,_Bulguksa_01.jpg)) | Wikimedia Commons, Bernard Gagnon | CC0 1.0 |

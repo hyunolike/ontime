@@ -23,6 +23,9 @@ class MainActivity : ComponentActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         val runtime = (application as OnTimeApp).runtime
         intent?.getStringExtra("poc")?.let(runtime::poc)
+        androidx.core.content.ContextCompat.registerReceiver(
+            this, pocReceiver, android.content.IntentFilter(POC_ACTION), androidx.core.content.ContextCompat.RECEIVER_EXPORTED,
+        )
         setContent {
             val state by runtime.state.collectAsStateWithLifecycle()
             val started by runtime.started.collectAsStateWithLifecycle()
@@ -47,6 +50,7 @@ class MainActivity : ComponentActivity() {
                             started = docentStarted,
                             onDrive = if (docent.play != null) runtime::startDocentDemo else null,
                             onGuide = runtime::guideTo,
+                            onRestart = if (docent.reset != null) runtime::restartDocent else null,
                         )
                         docent != null -> Unit
                         // 내비에 등록된 주차장으로 가는 경로가 아직 없다.
@@ -69,9 +73,29 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * 앱이 떠 있는 동안의 시험 동작. 시연 중에 앱을 다시 띄우지 않고 충전 상태를 켜고 끄는 데 쓴다.
+     * Pleos 홈 화면은 분할 화면의 앱을 다시 띄울 때 `am start`의 추가 값을 넘기지 않아 브로드캐스트로 받는다.
+     * `adb shell am broadcast -a io.github.hyunolike.ontime.POC --es poc charge`
+     */
+    private val pocReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: android.content.Context, intent: android.content.Intent) {
+            intent.getStringExtra("poc")?.let((application as OnTimeApp).runtime::poc)
+        }
+    }
+
+    override fun onDestroy() {
+        unregisterReceiver(pocReceiver)
+        super.onDestroy()
+    }
+
     override fun onStart() {
         super.onStart()
         // 화면이 보이는 동안에 시작해야 시스템이 허용한다.
         if ((application as OnTimeApp).runtime.keepAlive) KeepAliveService.start(this)
+    }
+
+    private companion object {
+        const val POC_ACTION = "io.github.hyunolike.ontime.POC"
     }
 }
