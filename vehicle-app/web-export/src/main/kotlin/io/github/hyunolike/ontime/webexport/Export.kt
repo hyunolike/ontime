@@ -4,6 +4,9 @@ import io.github.hyunolike.ontime.docent.AheadTracker
 import io.github.hyunolike.ontime.docent.DocentSession
 import io.github.hyunolike.ontime.docent.DocentState
 import io.github.hyunolike.ontime.docent.LiveStories
+import io.github.hyunolike.ontime.docent.NarrationPlanner
+import io.github.hyunolike.ontime.docent.RouteTimeline
+import io.github.hyunolike.ontime.docent.speakingSeconds
 import io.github.hyunolike.ontime.docent.nearbyOnFoot
 import io.github.hyunolike.ontime.fake.ScenarioSongpa
 import io.github.hyunolike.ontime.fake.track.ReplayBackedNavi
@@ -161,6 +164,7 @@ class Exporter {
         val session = DocentSession(
             player, navi, ReplayVehicle(player), speech, player, LiveStories(player, tracker, player.nextTurn),
             quietWithin = 600, seatHint = true, walkFrom = player, catalog = { pois }, askWindow = 10.seconds,
+            planner = NarrationPlanner(player, RouteTimeline.build(player, pois), metersPerSecond = { 100.0 }),
         )
         backgroundScope.launch { session.run() }
         runCurrent()
@@ -263,7 +267,8 @@ private class PlanSpeech(private val yes: Set<String>, private val pois: List<Po
 
     override suspend fun say(text: String) {
         pois.firstOrNull { text.contains(it.destination.name + ".") }?.let { lastPlace = it.destination.id }
-        delay(3.5.seconds)
+        // 앱의 자막과 같이 문장 길이만큼 걸린다.
+        delay(speakingSeconds(text).seconds)
     }
 
     override suspend fun askYesNo(prompt: String): Boolean = listenYesNo(prompt) == true

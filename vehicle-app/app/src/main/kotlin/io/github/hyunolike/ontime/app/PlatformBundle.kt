@@ -71,6 +71,8 @@ class DocentBundle(
     /** 위치 출처가 바뀌면(실제 위치 모드) 칩과 설명을 이 값으로 바꾼다. null이면 위의 기본 문구. */
     val modeChip: StateFlow<String?> = MutableStateFlow(null),
     val modeNote: StateFlow<String?> = MutableStateFlow(null),
+    /** 있으면 앞길 전체를 보고 말할 순서와 길이를 정한다. */
+    val planner: io.github.hyunolike.ontime.docent.NarrationPlanner? = null,
 )
 
 class PlacePhoto(@DrawableRes val resource: Int, val credit: String)

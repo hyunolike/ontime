@@ -21,9 +21,7 @@ class ExportTest {
     @Test
     fun `갈래는 답하는 순간까지 프레임이 같다`() {
         listOf(
-            Triple("none", "seokchon", "seokchon"),
             Triple("none", "bangi", "bangi"),
-            Triple("seokchon", "bangi+seokchon", "bangi"),
             Triple("g-seokchon", "g-seokchon+bangi", "bangi"),
         ).forEach { (base, branch, id) ->
             val a = frames(base)
@@ -33,6 +31,12 @@ class ExportTest {
             val diverge = a.zip(b).indexOfFirst { (x, y) -> x != y }
             assertTrue(diverge >= ask + ANSWER_FRAMES - 1, "$base → $branch: 질문 $ask, 갈라짐 $diverge")
         }
+    }
+
+    @Test
+    fun `석촌동은 출발 전 경유지로, 방이동은 질문으로 들를 수 있다`() {
+        // 10배속에서 석촌동 질문은 송파대로 회전 조용 구간에 바로 닿아 계획이 묻지 않는다(docs/features/narration-planner).
+        assertEquals(listOf("bangi", "g-bangi", "g-seokchon", "g-seokchon+bangi", "none"), result.paths.keys.sorted())
     }
 
     @Test
@@ -49,8 +53,8 @@ class ExportTest {
 
     @Test
     fun `예라고 답한 곳마다 경유지에 서서 도장을 찍는다`() {
-        assertEquals(listOf("seokchon", "bangi"), (frames("bangi+seokchon").last()["st"] as JsonArray).map { it.jsonPrimitive.content })
-        assertEquals(2, frames("bangi+seokchon").count { it["stop"]?.jsonPrimitive?.content == "waypoint" })
+        assertEquals(listOf("seokchon", "bangi"), (frames("g-seokchon+bangi").last()["st"] as JsonArray).map { it.jsonPrimitive.content })
+        assertEquals(2, frames("g-seokchon+bangi").count { it["stop"]?.jsonPrimitive?.content == "waypoint" })
         assertEquals(0, (frames("none").last()["st"] as JsonArray).size)
     }
 }

@@ -51,7 +51,7 @@ class OnTimeRuntime(private val app: Application) {
     private val prefs = app.getSharedPreferences("docent", android.content.Context.MODE_PRIVATE)
     private val memory = if (docent?.remember == true) DocentMemory.decode(prefs.getString(MEMORY_KEY, null)) else null
     private val docentSession = docent?.let { DocentSession(it.time, it.navi, it.vehicle, it.speech, it.road, it.stories, quietWithin = it.quietWithin, seatHint = true,
-            walkFrom = it.walkFrom, catalog = it.catalog, memory = memory, askWindow = it.askWindow,
+            walkFrom = it.walkFrom, catalog = it.catalog, memory = memory, askWindow = it.askWindow, planner = it.planner,
         ) }
     val docentState: StateFlow<DocentState?> = docentSession?.state ?: MutableStateFlow(null)
 
