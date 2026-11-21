@@ -39,3 +39,8 @@ brag-output/work/
 .playwright-mcp/
 .vercel
 .env*
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
