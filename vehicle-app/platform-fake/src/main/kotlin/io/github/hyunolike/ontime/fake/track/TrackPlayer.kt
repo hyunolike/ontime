@@ -6,6 +6,7 @@ import io.github.hyunolike.ontime.platform.Fix
 import io.github.hyunolike.ontime.platform.LocationGateway
 import io.github.hyunolike.ontime.platform.Maneuver
 import io.github.hyunolike.ontime.platform.RoadGateway
+import io.github.hyunolike.ontime.platform.RouteShape
 import io.github.hyunolike.ontime.platform.TimeSource
 import io.github.hyunolike.ontime.platform.VehicleGateway
 import java.time.Instant
@@ -43,7 +44,7 @@ class TrackPlayer(
     private val step: Duration = 2.seconds,
     /** 실제 위치를 따라갈 때 쓰는 기기 시계(밀리초). */
     private val clock: () -> Long = System::currentTimeMillis,
-) : TimeSource, LocationGateway, RoadGateway, VehicleGateway {
+) : TimeSource, LocationGateway, RoadGateway, VehicleGateway, RouteShape {
     private data class Stop(val atMeters: Double, val place: Destination)
 
     private data class State(
@@ -73,12 +74,29 @@ class TrackPlayer(
         add(0.0)
         for (i in 1 until xs.size) add(last() + hypot(xs[i] - xs[i - 1], ys[i] - ys[i - 1]))
     }
-    val length: Double = cumulative.last()
+    override val length: Double = cumulative.last()
 
     private val state = MutableStateFlow(State())
 
     /** 경로 위에서 달린 거리(미터). */
     val traveled: Double get() = state.value.traveled
+
+    override val progress: Double get() = state.value.traveled
+
+    override fun fixAt(meters: Double): Fix {
+        val (x, y) = pointAt(meters)
+        return Fix(lat0 + y / metersPerDegLat, lon0 + x / metersPerDegLon, headingAt(meters), cruise)
+    }
+
+    override fun turnAfter(meters: Double): Maneuver? = track.maneuvers
+        .filter { it.turn != null && it.atMeters > meters - TURN_SETTLE }
+        .minByOrNull { it.atMeters }
+        ?.let { Maneuver((it.atMeters - meters).toInt().coerceAtLeast(0), it.instruction, it.turn) }
+
+    override val maneuverMeters: List<Double> = track.maneuvers.map { it.atMeters.toDouble() }
+
+    override fun meterOf(place: Destination): Double =
+        placeAt.getOrPut(place.id) { project(place.latitude, place.longitude, 0.0, length)?.first ?: length }
 
     /** 경유지를 정해 두었으면(닿았든 아니든) true. */
     val hasStop: Boolean get() = state.value.stop != null
@@ -127,10 +145,7 @@ class TrackPlayer(
      * 경로를 따라 [place]의 지점을 [margin]m 넘게 지났으면 true. 길가 장소의 지점은 경로에서 그곳과 가장 가까운 곳이다.
      * 경유지에 들르느라 길을 벗어나도 달린 거리는 그대로라 앞의 장소를 지나친 것으로 보지 않는다.
      */
-    fun hasPassed(place: Destination, margin: Double = 200.0): Boolean {
-        val at = placeAt.getOrPut(place.id) { project(place.latitude, place.longitude, 0.0, length)?.first ?: length }
-        return state.value.traveled > at + margin
-    }
+    fun hasPassed(place: Destination, margin: Double = 200.0): Boolean = state.value.traveled > meterOf(place) + margin
 
     /** 경로에서 [place]와 가장 가까운 지점의 경로 위 미터. 이미 지난 곳이면 null. */
     fun canStopAt(place: Destination): Double? =

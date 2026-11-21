@@ -14,13 +14,15 @@ class ScriptedSpeech(
     private val answerDelay: Duration = 4.seconds,
     /** 한 문장을 말하는 데 걸리는 시간. 말하는 동안의 화면을 보여 주려고 둔다. */
     private val sayDelay: Duration = Duration.ZERO,
+    /** 문장마다 말하는 시간. 있으면 [sayDelay] 대신 쓴다. 실제 음성처럼 긴 문장은 오래 걸린다. */
+    private val sayDuration: ((String) -> Duration)? = null,
 ) : SpeechGateway {
     private val _spoken = MutableStateFlow<List<String>>(emptyList())
     val spoken: StateFlow<List<String>> = _spoken
 
     override suspend fun say(text: String) {
         _spoken.update { it + text }
-        delay(sayDelay)
+        delay(sayDuration?.invoke(text) ?: sayDelay)
     }
 
     override suspend fun askYesNo(prompt: String): Boolean {

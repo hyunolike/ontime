@@ -49,6 +49,20 @@ data class DocentMemory(val destinationId: String, val toldIds: List<String>, va
     }
 }
 
+/** 들를지 물은 결과. */
+enum class AskOutcome {
+    YES,
+    NO,
+
+    /** 묻는 중에 회전이 가까워져 닫았다. */
+    CLOSED_BY_TURN,
+
+    /** 해설을 마쳤을 때 이미 회전 앞이라 묻지 못했다. */
+    NOT_ASKED_TURN,
+}
+
+data class AskRecord(val placeId: String, val outcome: AskOutcome)
+
 /** 이야기 하나가 지금 어디까지 진행됐는지. */
 enum class NarrationPhase { TELLING, ASKING, ADDED, SKIPPED }
 
@@ -124,6 +138,8 @@ class DocentSession(
      * 기다린다. 실제 음성은 답이 없으면 null을 주므로 반드시 정해 둔다.
      */
     private val askWindow: Duration = Duration.INFINITE,
+    /** 있으면 앞길 전체를 보고 말할 순서와 길이를 정한다. 없으면 가장 가까운 곳부터 바로 말한다. */
+    private val planner: NarrationPlanner? = null,
 ) {
     private var restored = false
 
@@ -134,6 +150,11 @@ class DocentSession(
     private var narrating: Job? = null
     private var touched: CompletableDeferred<Boolean>? = null
     private var closedByTurn = false
+
+    private val _asks = mutableListOf<AskRecord>()
+
+    /** 들를지 물은 결과. 평가와 시범 운영 지표(들르기 비율, 회전에 닫힌 질문)에 쓴다. */
+    val asks: List<AskRecord> get() = _asks.toList()
 
     private val _state = MutableStateFlow<DocentState?>(null)
     val state: StateFlow<DocentState?> = _state
@@ -201,16 +222,22 @@ class DocentSession(
                 }
             }
             if (!input.driving || quiet != null || narrating?.isActive == true) return@collect
-            val next = input.ahead.firstOrNull {
-                it.poi.destination.id !in toldIds && it.settled && it.distanceMeters in tooLate..announceWithin
-            } ?: return@collect
+            fun startable(a: PoiAhead) = a.poi.destination.id !in toldIds && a.settled && a.distanceMeters in tooLate..announceWithin
+            val (next, telling) = if (planner != null) {
+                // 계획의 첫 항목을 시작할 때가 됐으면 그 길이로 시작한다. 실제 판정(쪽, 거리)도 다시 확인한다.
+                val planned = planner.next(toldIds, canAsk = _state.value?.heading == null, catalog()) ?: return@collect
+                val ahead = input.ahead.firstOrNull { it.poi.destination.id == planned.poi.destination.id && startable(it) } ?: return@collect
+                ahead to planned.telling
+            } else {
+                (input.ahead.firstOrNull(::startable) ?: return@collect) to null
+            }
             toldIds += next.poi.destination.id
             // 곧바로 시작해 이야기 화면을 띄운다. 늦게 시작하면 그 사이에 다음 곳의 예고가 잠깐 비친다.
-            narrating = launch(start = CoroutineStart.UNDISPATCHED) { narrate(next) }
+            narrating = launch(start = CoroutineStart.UNDISPATCHED) { narrate(next, telling) }
         }
     }
 
-    private suspend fun narrate(ahead: PoiAhead) {
+    private suspend fun narrate(ahead: PoiAhead, telling: Telling? = null) {
         val poi = ahead.poi
         val name = poi.destination.name
         val speedNow = road.speedMetersPerSecond.first().coerceAtLeast(1.0)
@@ -218,7 +245,11 @@ class DocentSession(
         val lead = if (minutes <= 1) "곧" else "${minutes}분 뒤"
         // 남은 시간에 맞춰 해설 길이를 고른다.
         val others = _state.value?.ahead.orEmpty().filter { it.poi.destination.id !in toldIds }
-        val story = pickStory(ahead, speedNow, road.nextManeuver.first(), others, announceWithin)
+        val story = when (telling) {
+            Telling.LONG -> poi.story
+            Telling.SHORT -> poi.short()
+            null -> pickStory(ahead, speedNow, road.nextManeuver.first(), others, announceWithin)
+        }
         val where = if (seatHint && ahead.side == Side.RIGHT) "오른쪽, 조수석 쪽" else ahead.side.word()
         val text = "$lead ${where}에 $name. $story"
 
@@ -227,11 +258,23 @@ class DocentSession(
         speech.say(text)
 
         // 들를 곳은 한 번에 하나만 둔다. 이미 정했으면 묻지 않는다.
-        if (poi.canStop && _state.value?.heading == null && _state.value?.quiet == null) {
+        val askable = poi.canStop && _state.value?.heading == null
+        if (askable && _state.value?.quiet != null) {
+            _asks += AskRecord(poi.destination.id, AskOutcome.NOT_ASKED_TURN)
+        } else if (askable) {
             closedByTurn = false
             val question = "들러 볼까요?"
             setNarration(Narration(ahead, NarrationPhase.ASKING, question, lead, story))
-            if (askByVoiceOrTouch(question) && navi.addWaypoint(poi.destination)) {
+            val yes = askByVoiceOrTouch(question)
+            _asks += AskRecord(
+                poi.destination.id,
+                when {
+                    closedByTurn -> AskOutcome.CLOSED_BY_TURN
+                    yes -> AskOutcome.YES
+                    else -> AskOutcome.NO
+                },
+            )
+            if (yes && navi.addWaypoint(poi.destination)) {
                 val result = "${name.withEulReul()} 경유지로 넣었어요"
                 _state.update { it?.copy(waypoint = poi.destination) }
                 setNarration(Narration(ahead, NarrationPhase.ADDED, result, lead, story))

@@ -20,6 +20,9 @@ import kotlin.time.Duration.Companion.seconds
 import io.github.hyunolike.ontime.pleos.PleosLocation
 import io.github.hyunolike.ontime.docent.AheadTracker
 import io.github.hyunolike.ontime.docent.LiveStories
+import io.github.hyunolike.ontime.docent.NarrationPlanner
+import io.github.hyunolike.ontime.docent.RouteTimeline
+import io.github.hyunolike.ontime.docent.speakingSeconds
 import io.github.hyunolike.ontime.fake.ScenarioSongpa
 import io.github.hyunolike.ontime.fake.ScriptedSpeech
 import io.github.hyunolike.ontime.fake.track.ReplayBackedNavi
@@ -60,6 +63,8 @@ object Platform {
         // 주행은 재생기, 충전은 실제 차량 값. 에뮬레이터에서 충전구를 열 수 없으면 `poc charge`로 시험 값을 켠다.
         val docentVehicle = ReplayVehicle(player, vehicle)
         val tracker = AheadTracker(ScenarioSongpa.pois, passedOnRoute = { player.hasPassed(it.destination) })
+        // 앞길 전체를 보고 말할 순서와 길이를 정한다. 10배속 재생(초속 10m)이라 실제 1초에 경로 100m를 간다.
+        val planner = NarrationPlanner(player, RouteTimeline.build(player, ScenarioSongpa.pois), metersPerSecond = { 100.0 })
         // 위치 출처. 재생(기본) 또는 실제 위치(FusedLocation, 에뮬레이터에서는 tools/geo-drive.py가 좌표를 넣음).
         val modeChip = MutableStateFlow<String?>(null)
         val modeNote = MutableStateFlow<String?>(null)
@@ -76,6 +81,7 @@ object Platform {
                     val points = player.samples(2_000.0).map { it.latitude to it.longitude }
                     TourCatalog(client).load(points, existing = ScenarioSongpa.pois)
                 }
+                planner.timeline = RouteTimeline.build(player, ScenarioSongpa.pois + extra)
                 android.util.Log.i("OnTimePleos", "<- TourCatalog ${extra.size}곳: ${extra.joinToString { it.destination.name }}")
                 // 수집과 같은 메인 스레드에서 바꾼다.
                 tracker.setCatalog(ScenarioSongpa.pois + extra)
@@ -108,7 +114,8 @@ object Platform {
                 navi = drive,
                 vehicle = docentVehicle,
                 // 서버 음성이 없으면 에뮬레이터의 기기 내 엔진이 오류를 내므로 자막과 버튼만 쓴다.
-                speech = voiceSpeech ?: ScriptedSpeech(answer = false, answerDelay = 10.seconds, sayDelay = 3.5.seconds),
+                // 자막은 실제 음성처럼 문장 길이만큼 보여 준다. 스케줄러가 짧은 해설을 고르는 의미가 생긴다.
+                speech = voiceSpeech ?: ScriptedSpeech(answer = false, answerDelay = 10.seconds, sayDuration = { speakingSeconds(it).seconds }),
                 voice = voiceSpeech?.ready ?: MutableStateFlow(false),
                 askWindow = if (voiceSpeech != null) 12.seconds else kotlin.time.Duration.INFINITE,
                 road = player,
@@ -140,6 +147,7 @@ object Platform {
                     docentVehicle.simulateCharging(false)
                     if (live) startFollowing()
                 },
+                planner = planner,
                 modeChip = modeChip,
                 modeNote = modeNote,
             ),
