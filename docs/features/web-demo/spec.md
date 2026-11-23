@@ -1,7 +1,7 @@
 # 웹 체험판 (web-demo) 명세와 설계
 
 - 작성일: 2026-11-20
-- 상태: 공개 (https://gilbeot.hyunolike.dev, 2026-11-20)
+- 상태: 공개 (https://gilbeot.pages.dev, 2026-11-21)
 
 ## 1. 문제
 
@@ -34,11 +34,17 @@
 
 ## 5. 공개
 
-Vercel 프로젝트 `gilbeot`(hyunho-jangs-projects)로 공개한다. 주소는 https://gilbeot-three.vercel.app 이다(`gilbeot.vercel.app`은 이미 쓰이고 있어 Vercel이 정한 이름). 처음에 GitHub Pages로 공개했다가 사용자 요청으로 Vercel로 옮기고 Pages는 껐다(2026-11-20).
+Cloudflare Pages 프로젝트 `gilbeot`으로 공개한다. 주소는 https://gilbeot.pages.dev 다(2026-11-21).
 
-주소는 https://gilbeot.hyunolike.dev 다(`hyunolike.dev`의 네임서버가 Vercel이라 하위 도메인을 바로 붙였다). Vercel이 정한 https://gilbeot-three.vercel.app 도 같은 곳을 가리킨다.
+옮긴 까닭: 2026-11-21에 Vercel 계정 전체가 `402 DEPLOYMENT_DISABLED`로 멈췄다. 같은 계정의 다른 프로젝트도 모두 막혔고, 병합 뒤 새 배포도 만들어지지 않았다. 무료 플랜 한도를 넘으면 사이트가 정지되는 플랫폼(Vercel, Netlify)을 피해 대역폭 제한이 사실상 없는 Cloudflare Pages를 골랐다. 그 전에는 GitHub Pages(처음), Vercel(2026-11-20, https://gilbeot.hyunolike.dev)로 공개했었다.
 
-Vercel 프로젝트를 이 저장소와 연결하고 루트 폴더를 `web`으로 두었다. `main`에 push하면 프로덕션, 다른 브랜치는 미리보기로 자동 배포된다. 정적 파일이라 빌드 설정이 없다. 앱 판단이 바뀌었으면 기록을 다시 뽑아 함께 올린다.
+배포는 Wrangler로 한다. 커밋된 `web/`만 올리도록 `git archive`로 꺼내 올린다(로컬에만 있는 파일이 섞이지 않게).
+
+```bash
+D=$(mktemp -d) && git archive HEAD web | tar -x -C "$D" && npx wrangler pages deploy "$D/web" --project-name gilbeot --branch main
+```
+
+앱 판단이 바뀌었으면 기록을 다시 뽑아 함께 올린다.
 
 ```bash
 cd vehicle-app && ./gradlew :web-export:run
@@ -54,4 +60,4 @@ cd vehicle-app && ./gradlew :web-export:run
 - 기록 7개(갈래: 없음, 석촌동, 방이동, 둘 다, 출발 전 안내 석촌동, 방이동, 석촌동 뒤 방이동). `ExportTest`가 갈래 정렬(답하는 프레임까지 같음), 쪽(서울공항 오른쪽, 고분군과 몽촌토성 왼쪽), 목적지 도착, 도장을 확인한다.
 - 브라우저(Playwright)로 확인: 출발, 회전 앞 쉼, 석촌동 질문에 "들르기"로 갈래 바꾸기, 경유지 도착과 도장, 충전 카드, 석촌동 "지나가기"와 방이동 "들르기", 계속 안내, 목적지 충전 카드(몽촌토성 14분, 방이동 16분, 에뮬레이터 앱과 같음), 390px 폭에서 가로 스크롤 없음.
 - 체험판에서 찾은 앱 버그: 걸어서 갈 곳에 지금 서 있는 곳이 "걸어서 1분"으로 들어감. `nearbyOnFoot`이 150m 안을 빼도록 고쳤다.
-- 공개: Vercel 주소에서 페이지, 기록, 사진이 로그인 없이 열리고(HTTP 200), 출발과 "들르기", 경유지 도착과 도장, 지도 타일을 브라우저로 확인했다.
+- 공개: Cloudflare Pages 주소에서 페이지, 기록, 사진이 로그인 없이 열리고(HTTP 200), 출발과 "들르기", 경유지 도착과 도장, 지도 타일을 브라우저로 확인했다(2026-11-21).

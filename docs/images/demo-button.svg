@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="128" viewBox="0 0 640 128" role="img" aria-labelledby="title">
+  <title id="title">길벗 체험판 열기</title>
+  <rect x="1" y="1" width="638" height="126" rx="64" fill="#0B0F14" stroke="#3DDC97" stroke-width="2"/>
+  <circle cx="64" cy="64" r="40" fill="#3DDC97"/>
+  <path d="M55 47 L79 64 L55 81 Z" fill="#0B0F14"/>
+  <g font-family="'Pretendard','Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" text-anchor="start">
+    <text x="128" y="61" fill="#E7EEF4" font-size="34" font-weight="700">브라우저에서 바로 체험하기</text>
+    <text x="128" y="94" fill="#FFC857" font-size="20" font-weight="400">gilbeot.pages.dev · 설치 없이 3분</text>
+  </g>
+  <path d="M592 53 L603 64 L592 75" fill="none" stroke="#3DDC97" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
