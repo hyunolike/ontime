@@ -1,0 +1,202 @@
+{
+  "renderer": "rsvg-convert version 2.58.4",
+  "contrast": {
+    "#353535": 12.266166723408645,
+    "#1A9365": 3.885056457066281,
+    "#3DDC97": 1.7672940171803275,
+    "#0B0F14": 19.21914648772286
+  },
+  "safe_zone": {
+    "center": [
+      54,
+      54
+    ],
+    "radius": 33,
+    "method": "Bezier convex hull: every endpoint and control point inside disk"
+  },
+  "concepts": {
+    "p1-road-story": {
+      "control_hull_max_radius_dp": 32.64965543462902,
+      "radial_margin_dp": 0.3503445653709818,
+      "glyph_width_percent_upper_bound": 53.70370370370371,
+      "raster_max_radius_dp_20x": 31.376045799303647,
+      "foreground_alpha_bbox_20x": [
+        500,
+        640,
+        1660,
+        1580
+      ],
+      "negative_space_48px_samples": {
+        "gray": {
+          "positions": [
+            [
+              24,
+              26
+            ]
+          ],
+          "rgb": [
+            [
+              53,
+              53,
+              53
+            ]
+          ],
+          "match_background": true
+        },
+        "green": {
+          "positions": [
+            [
+              24,
+              26
+            ]
+          ],
+          "rgb": [
+            [
+              26,
+              147,
+              101
+            ]
+          ],
+          "match_background": true
+        }
+      }
+    },
+    "p2-tour-flag": {
+      "control_hull_max_radius_dp": 32.802438933713454,
+      "radial_margin_dp": 0.19756106628654635,
+      "glyph_width_percent_upper_bound": 50.0,
+      "raster_max_radius_dp_20x": 32.76738088404381,
+      "foreground_alpha_bbox_20x": [
+        560,
+        580,
+        1640,
+        1480
+      ],
+      "negative_space_48px_samples": {
+        "gray": {
+          "positions": [
+            [
+              19,
+              29
+            ]
+          ],
+          "rgb": [
+            [
+              53,
+              53,
+              53
+            ]
+          ],
+          "match_background": true
+        },
+        "green": {
+          "positions": [
+            [
+              19,
+              29
+            ]
+          ],
+          "rgb": [
+            [
+              26,
+              147,
+              101
+            ]
+          ],
+          "match_background": true
+        }
+      }
+    },
+    "p3-side-window": {
+      "control_hull_max_radius_dp": 32.449961479175904,
+      "radial_margin_dp": 0.5500385208240957,
+      "glyph_width_percent_upper_bound": 50.0,
+      "raster_max_radius_dp_20x": 30.509609142039167,
+      "foreground_alpha_bbox_20x": [
+        540,
+        720,
+        1620,
+        1440
+      ],
+      "negative_space_48px_samples": {
+        "gray": {
+          "positions": [
+            [
+              17,
+              24
+            ],
+            [
+              27,
+              23
+            ]
+          ],
+          "rgb": [
+            [
+              53,
+              53,
+              53
+            ],
+            [
+              53,
+              53,
+              53
+            ]
+          ],
+          "match_background": true
+        },
+        "green": {
+          "positions": [
+            [
+              17,
+              24
+            ],
+            [
+              27,
+              23
+            ]
+          ],
+          "rgb": [
+            [
+              26,
+              147,
+              101
+            ],
+            [
+              26,
+              147,
+              101
+            ]
+          ],
+          "match_background": true
+        }
+      }
+    }
+  },
+  "files": {
+    "README.md": "0e10f4f6da8aad108d70961c38cdd21e1f56074ea5d033af8bbe28fa8d554c6f",
+    "build.py": "0504e4999b4113b9f1c2af10ce5f66ad2f4a40aaf47f9363fce01b3622ebda11",
+    "inspection.png": "6d4113d01fe74a0ddb09f435524090bc4642979d45b19f198b4b25bb16cdbfbb",
+    "p1-road-story-foreground.svg": "f83c448b0074db89e7834f7af4931566b3a9c5a5efcfa1033e04cc9dba44439f",
+    "p1-road-story-gray-48.png": "0b369524f739ce33d093be85e2455be4c00631d3a0123cc2edd80cb08c81da30",
+    "p1-road-story-gray-512.png": "6aff1bb56e6f114c2b5c86d04fb8bd81ff323c46ba5c6df8492c27b69c1e0b6f",
+    "p1-road-story-gray.svg": "9b9e95b2dde56868701bcd15e5a9132767368b2ff77db60c25775b33e4134d9b",
+    "p1-road-story-green-48.png": "08183cd4b8a0ec29f33ee924330ade37be56a7b4f10812944e0d1968c87bdbcb",
+    "p1-road-story-green-512.png": "5bb857564ed10ff2b29c697db97cd1296d4f1032a9bb22af4871cbd48e615bc0",
+    "p1-road-story-green.svg": "ef9bbb9e99949b4e3febac05a6fcdad2632fa80a467ba105fd23fb56197fb3da",
+    "p2-tour-flag-foreground.svg": "6fdb253bed1ac9108dddbbe6842dfe741d95597c9270f7f7f2db455991735c0d",
+    "p2-tour-flag-gray-48.png": "8dfdd1bcaf689b64f713f82c242ed4d51e1f26497e03cf021117f41df91a4896",
+    "p2-tour-flag-gray-512.png": "92f0a43679d16c2b03ef1e6e2b66103de7a360ac2ad80b820ac447ef6915e2e6",
+    "p2-tour-flag-gray.svg": "eb04c9d587074c14a7cce6cab925a49f2257f53e7965a4f4839277fdaa4d84e8",
+    "p2-tour-flag-green-48.png": "007873b9300f72380a971cda64012401e9da73c2568f6f3ac29098f851b4b9aa",
+    "p2-tour-flag-green-512.png": "999d24cdfbb2b449cac1f5d4fa75013c69ca1031e11e0339f691de5510117a6f",
+    "p2-tour-flag-green.svg": "9e9fd2ed66ed5be362f3a6fc46829cd19655f1274219e830d1b421658ba43ab3",
+    "p3-side-window-foreground.svg": "939876f592cc9d8cc16e203b1fb1675c42cc597ce9500e6f5b4925a2c138a821",
+    "p3-side-window-gray-48.png": "d3dabf70caa60c82780e10c6ebc642ad84411c5ff241298268ee719b9412d06a",
+    "p3-side-window-gray-512.png": "c288ffff05ba9f4192eb9b8d7cc3a3ae2c5bf9b738190902e45fa8f09d279ce1",
+    "p3-side-window-gray.svg": "1844fb79d821810c500d65cc03460ebe2c345d11847392a34ea311bc8bfe95e7",
+    "p3-side-window-green-48.png": "35ad0a55f973b5024339e7f020a679750c26d4efcfc941813ea47917257d5245",
+    "p3-side-window-green-512.png": "15d6ba1cd0ea5f9f07ea330c726f6f8c486b67fd70646e730e010a40d56b88bf",
+    "p3-side-window-green.svg": "bdf3efdc0c6690787a256556570c2f6ac5b651eccc7948e19ed5430424f87aa7",
+    "preview.html": "fbd910c74f52ba9a989429f395559b024f6b156a50918783cf09f2fe3d357f4a"
+  }
+}
