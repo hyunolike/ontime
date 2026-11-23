@@ -1,0 +1,522 @@
+{
+  "original_sha256": {
+    "preview.html": "f86aabbbb56a582ca9f87bf75306e22f3d3bf8a43054c2493797df769a0e9e94",
+    "concept-b-side-window.png": "20f292ef8bcf57a7be15b2ce90de1e83afd1edad7e09c0a14096b7fe22bb06fa",
+    "concept-b-side-window.svg": "94660402c49c50fcb14257717e494468aaf69bb02224235b5d843610c2308dcb",
+    "README.md": "a5e5161ea6c18d28f3c34e41b437ad802ae42e5b9228334b8289a8c5ad59a4de",
+    "concept-c-free.png": "3a27087aef717f513b2c9a3661b1d111d7bc0b85c0bfe800e29f589733ea14a8",
+    "concept-a-road-story.png": "8226369ef164420eaabb2c270286842b12fed2e5c05f13230f313e53c2f4cd67",
+    "concept-a-road-story.svg": "f02d6d3c53c1068a2d875e9c2816f39c4c917dc6431a093bda40572600b91475",
+    "concept-c-free.svg": "76d8f134bb760a569dbe6714af95a664bfca95de839e25068c61faa8bf26adac"
+  },
+  "center": [
+    54,
+    54
+  ],
+  "safe_radius": 29,
+  "method": "All endpoints, x/y curve extrema, and roots of d(r^2)/dt; add 3 for round strokes, 0 for the filled pennant.",
+  "concepts": {
+    "concept-a2-road-story": [
+      {
+        "path": "M37 73 L49 51",
+        "stroke_radius": 3,
+        "max_radius": 28.495097567963924,
+        "clearance": 0.5049024320360758,
+        "samples": [
+          {
+            "segment": 1,
+            "kind": "endpoint",
+            "t": 0.0,
+            "point": [
+              37.0,
+              73.0
+            ],
+            "radius": 25.495097567963924,
+            "with_stroke": 28.495097567963924
+          },
+          {
+            "segment": 1,
+            "kind": "endpoint",
+            "t": 1.0,
+            "point": [
+              49.0,
+              51.0
+            ],
+            "radius": 5.830951894845301,
+            "with_stroke": 8.8309518948453
+          },
+          {
+            "segment": 1,
+            "kind": "radial_extreme",
+            "t": 0.9904458598726115,
+            "point": [
+              48.88535031847134,
+              51.21019108280255
+            ],
+            "radius": 5.826034256613639,
+            "with_stroke": 8.826034256613639
+          }
+        ]
+      },
+      {
+        "path": "M71 73 L59 51",
+        "stroke_radius": 3,
+        "max_radius": 28.495097567963924,
+        "clearance": 0.5049024320360758,
+        "samples": [
+          {
+            "segment": 1,
+            "kind": "endpoint",
+            "t": 0.0,
+            "point": [
+              71.0,
+              73.0
+            ],
+            "radius": 25.495097567963924,
+            "with_stroke": 28.495097567963924
+          },
+          {
+            "segment": 1,
+            "kind": "endpoint",
+            "t": 1.0,
+            "point": [
+              59.0,
+              51.0
+            ],
+            "radius": 5.830951894845301,
+            "with_stroke": 8.8309518948453
+          },
+          {
+            "segment": 1,
+            "kind": "radial_extreme",
+            "t": 0.9904458598726115,
+            "point": [
+              59.11464968152866,
+              51.21019108280255
+            ],
+            "radius": 5.826034256613639,
+            "with_stroke": 8.826034256613639
+          }
+        ]
+      },
+      {
+        "path": "M61 34 H67 Q73 34 73 40 Q73 44 70 44 V50 L64 44 H61 Q55 44 55 39 Q55 34 61 34 Z",
+        "stroke_radius": 3,
+        "max_radius": 28.46762661805749,
+        "clearance": 0.5323733819425094,
+        "samples": [
+          {
+            "segment": 1,
+            "kind": "endpoint",
+            "t": 0.0,
+            "point": [
+              61.0,
+              34.0
+            ],
+            "radius": 21.18962010041709,
+            "with_stroke": 24.18962010041709
+          },
+          {
+            "segment": 1,
+            "kind": "endpoint",
+            "t": 1.0,
+            "point": [
+              67.0,
+              34.0
+            ],
+            "radius": 23.853720883753127,
+            "with_stroke": 26.853720883753127
+          },
+          {
+            "segment": 2,
+            "kind": "endpoint",
+            "t": 0.0,
+            "point": [
+              67.0,
+              34.0
+            ],
+            "radius": 23.853720883753127,
+            "with_stroke": 26.853720883753127
+          },
+          {
+            "segment": 2,
+            "kind": "endpoint",
+            "t": 1.0,
+            "point": [
+              73.0,
+              40.0
+            ],
+            "radius": 23.600847442411894,
+            "with_stroke": 26.600847442411894
+          },
+          {
+            "segment": 2,
+            "kind": "radial_extreme",
+            "t": 0.4833314808639231,
+            "point": [
+              71.3983218480024,
+              35.401655922364675
+            ],
+            "radius": 25.46762661805749,
+            "with_stroke": 28.46762661805749
+          },
+          {
+            "segment": 3,
+            "kind": "endpoint",
+            "t": 0.0,
+            "point": [
+              73.0,
+              40.0
+            ],
+            "radius": 23.600847442411894,
+            "with_stroke": 26.600847442411894
+          },
+          {
+            "segment": 3,
+            "kind": "endpoint",
+            "t": 1.0,
+            "point": [
+              70.0,
+              44.0
+            ],
+            "radius": 18.867962264113206,
+            "with_stroke": 21.867962264113206
+          },
+          {
+            "segment": 4,
+            "kind": "endpoint",
+            "t": 0.0,
+            "point": [
+              70.0,
+              44.0
+            ],
+            "radius": 18.867962264113206,
+            "with_stroke": 21.867962264113206
+          },
+          {
+            "segment": 4,
+            "kind": "endpoint",
+            "t": 1.0,
+            "point": [
+              70.0,
+              50.0
+            ],
+            "radius": 16.492422502470642,
+            "with_stroke": 19.492422502470642
+          },
+          {
+            "segment": 5,
+            "kind": "endpoint",
+            "t": 0.0,
+            "point": [
+              70.0,
+              50.0
+            ],
+            "radius": 16.492422502470642,
+            "with_stroke": 19.492422502470642
+          },
+          {
+            "segment": 5,
+            "kind": "endpoint",
+            "t": 1.0,
+            "point": [
+              64.0,
+              44.0
+            ],
+            "radius": 14.142135623730951,
+            "with_stroke": 17.14213562373095
+          },
+          {
+            "segment": 6,
+            "kind": "endpoint",
+            "t": 0.0,
+            "point": [
+              64.0,
+              44.0
+            ],
+            "radius": 14.142135623730951,
+            "with_stroke": 17.14213562373095
+          },
+          {
+            "segment": 6,
+            "kind": "endpoint",
+            "t": 1.0,
+            "point": [
+              61.0,
+              44.0
+            ],
+            "radius": 12.206555615733702,
+            "with_stroke": 15.206555615733702
+          },
+          {
+            "segment": 7,
+            "kind": "endpoint",
+            "t": 0.0,
+            "point": [
+              61.0,
+              44.0
+            ],
+            "radius": 12.206555615733702,
+            "with_stroke": 15.206555615733702
+          },
+          {
+            "segment": 7,
+            "kind": "endpoint",
+            "t": 1.0,
+            "point": [
+              55.0,
+              39.0
+            ],
+            "radius": 15.033296378372908,
+            "with_stroke": 18.03329637837291
+          },
+          {
+            "segment": 7,
+            "kind": "radial_extreme",
+            "t": 0.3075734343746109,
+            "point": [
+              57.876727292702626,
+              43.52699291233503
+            ],
+            "radius": 11.167492644289768,
+            "with_stroke": 14.167492644289768
+          },
+          {
+            "segment": 8,
+            "kind": "endpoint",
+            "t": 0.0,
+            "point": [
+              55.0,
+              39.0
+            ],
+            "radius": 15.033296378372908,
+            "with_stroke": 18.03329637837291
+          },
+          {
+            "segment": 8,
+            "kind": "endpoint",
+            "t": 1.0,
+            "point": [
+              61.0,
+              34.0
+            ],
+            "radius": 21.18962010041709,
+            "with_stroke": 24.18962010041709
+          },
+          {
+            "segment": 9,
+            "kind": "endpoint",
+            "t": 0.0,
+            "point": [
+              61.0,
+              34.0
+            ],
+            "radius": 21.18962010041709,
+            "with_stroke": 24.18962010041709
+          },
+          {
+            "segment": 9,
+            "kind": "endpoint",
+            "t": 1.0,
+            "point": [
+              61.0,
+              34.0
+            ],
+            "radius": 21.18962010041709,
+            "with_stroke": 24.18962010041709
+          }
+        ]
+      }
+    ],
+    "concept-d-guide-flag": [
+      {
+        "path": "M37 73 L49 51",
+        "stroke_radius": 3,
+        "max_radius": 28.495097567963924,
+        "clearance": 0.5049024320360758,
+        "samples": [
+          {
+            "segment": 1,
+            "kind": "endpoint",
+            "t": 0.0,
+            "point": [
+              37.0,
+              73.0
+            ],
+            "radius": 25.495097567963924,
+            "with_stroke": 28.495097567963924
+          },
+          {
+            "segment": 1,
+            "kind": "endpoint",
+            "t": 1.0,
+            "point": [
+              49.0,
+              51.0
+            ],
+            "radius": 5.830951894845301,
+            "with_stroke": 8.8309518948453
+          },
+          {
+            "segment": 1,
+            "kind": "radial_extreme",
+            "t": 0.9904458598726115,
+            "point": [
+              48.88535031847134,
+              51.21019108280255
+            ],
+            "radius": 5.826034256613639,
+            "with_stroke": 8.826034256613639
+          }
+        ]
+      },
+      {
+        "path": "M71 73 L59 51",
+        "stroke_radius": 3,
+        "max_radius": 28.495097567963924,
+        "clearance": 0.5049024320360758,
+        "samples": [
+          {
+            "segment": 1,
+            "kind": "endpoint",
+            "t": 0.0,
+            "point": [
+              71.0,
+              73.0
+            ],
+            "radius": 25.495097567963924,
+            "with_stroke": 28.495097567963924
+          },
+          {
+            "segment": 1,
+            "kind": "endpoint",
+            "t": 1.0,
+            "point": [
+              59.0,
+              51.0
+            ],
+            "radius": 5.830951894845301,
+            "with_stroke": 8.8309518948453
+          },
+          {
+            "segment": 1,
+            "kind": "radial_extreme",
+            "t": 0.9904458598726115,
+            "point": [
+              59.11464968152866,
+              51.21019108280255
+            ],
+            "radius": 5.826034256613639,
+            "with_stroke": 8.826034256613639
+          }
+        ]
+      },
+      {
+        "path": "M69 37 V52",
+        "stroke_radius": 3,
+        "max_radius": 25.67156809750927,
+        "clearance": 3.328431902490731,
+        "samples": [
+          {
+            "segment": 1,
+            "kind": "endpoint",
+            "t": 0.0,
+            "point": [
+              69.0,
+              37.0
+            ],
+            "radius": 22.67156809750927,
+            "with_stroke": 25.67156809750927
+          },
+          {
+            "segment": 1,
+            "kind": "endpoint",
+            "t": 1.0,
+            "point": [
+              69.0,
+              52.0
+            ],
+            "radius": 15.132745950421556,
+            "with_stroke": 18.13274595042156
+          }
+        ]
+      },
+      {
+        "path": "M69 34 L78 39 L69 44 Z",
+        "stroke_radius": 0,
+        "max_radius": 28.30194339616981,
+        "clearance": 0.6980566038301887,
+        "samples": [
+          {
+            "segment": 1,
+            "kind": "endpoint",
+            "t": 0.0,
+            "point": [
+              69.0,
+              34.0
+            ],
+            "radius": 25.0,
+            "with_stroke": 25.0
+          },
+          {
+            "segment": 1,
+            "kind": "endpoint",
+            "t": 1.0,
+            "point": [
+              78.0,
+              39.0
+            ],
+            "radius": 28.30194339616981,
+            "with_stroke": 28.30194339616981
+          },
+          {
+            "segment": 2,
+            "kind": "endpoint",
+            "t": 0.0,
+            "point": [
+              78.0,
+              39.0
+            ],
+            "radius": 28.30194339616981,
+            "with_stroke": 28.30194339616981
+          },
+          {
+            "segment": 2,
+            "kind": "endpoint",
+            "t": 1.0,
+            "point": [
+              69.0,
+              44.0
+            ],
+            "radius": 18.027756377319946,
+            "with_stroke": 18.027756377319946
+          },
+          {
+            "segment": 3,
+            "kind": "endpoint",
+            "t": 0.0,
+            "point": [
+              69.0,
+              44.0
+            ],
+            "radius": 18.027756377319946,
+            "with_stroke": 18.027756377319946
+          },
+          {
+            "segment": 3,
+            "kind": "endpoint",
+            "t": 1.0,
+            "point": [
+              69.0,
+              34.0
+            ],
+            "radius": 25.0,
+            "with_stroke": 25.0
+          }
+        ]
+      }
+    ]
+  },
+  "preview_image_count": 36,
+  "original_concepts_unchanged": true
+}

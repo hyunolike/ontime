@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#0B0F14"/>
+  <!-- Artwork, including 3 dp stroke radius, stays inside r=29 at (54,54). -->
+  <svg width="512" height="512" viewBox="18 18 72 72" fill="none"
+       stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M42 75 L48 58 H44 Q36 58 36 50 V44 Q36 36 44 36 H64 Q72 36 72 44 V50 Q72 58 64 58 H60 L66 75" stroke="#3DDC97"/>
+    <path d="M47 46 H61" stroke="#E7EEF4"/>
+    <path d="M54 65 V73" stroke="#E7EEF4"/>
+  </svg>
+</svg>

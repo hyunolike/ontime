@@ -1,0 +1,132 @@
+{
+  "renderer": "rsvg-convert version 2.58.4",
+  "geometry": {
+    "bbox_dp": [
+      35.75,
+      37,
+      75.75,
+      77.0
+    ],
+    "bbox_percent_of_72dp_visible_tile": [
+      55.55555555555556,
+      55.55555555555556
+    ],
+    "bbox_percent_of_108dp_full_layer": [
+      37.03703703703704,
+      37.03703703703704
+    ],
+    "bbox_512px": [
+      126.22222222222223,
+      135.11111111111111,
+      410.6666666666667,
+      419.55555555555554
+    ],
+    "bbox_size_512px": [
+      284.44444444444446,
+      284.44444444444446
+    ],
+    "bbox_percent_of_512px_tile": [
+      55.55555555555556,
+      55.55555555555556
+    ],
+    "white_area_centroid_dp": [
+      54.01089898530446,
+      52.87955726633718
+    ],
+    "optical_offset_from_bbox_centered_dp": [
+      1.75,
+      3
+    ],
+    "pole_width_dp": 6,
+    "pole_width_at_48px": 4.0,
+    "boundary_sample_max_radius_dp": 28.15102637663545,
+    "boundary_sample_error_bound_dp": 0.004846648326421053,
+    "control_hull_max_radius_dp": 28.545518895266206,
+    "safe_circle_radius_dp": 33,
+    "proven_radial_margin_dp": 4.454481104733794,
+    "containment_proof": "All endpoints and cubic control points are in the convex r=33 disk; the entire filled silhouette is contained.",
+    "raster_20x_all_nonzero_alpha_max_radius_dp": 28.17634202660097
+  },
+  "contrast": {
+    "#1A9365": 3.885056457066281,
+    "#353535": 12.266166723408645
+  },
+  "xml_render_checks": {
+    "foreground": {
+      "512": {
+        "identical_rgba_pixels": true,
+        "different_pixels": 0,
+        "max_channel_difference": 0
+      },
+      "96": {
+        "identical_rgba_pixels": true,
+        "different_pixels": 0,
+        "max_channel_difference": 0
+      },
+      "48": {
+        "identical_rgba_pixels": true,
+        "different_pixels": 0,
+        "max_channel_difference": 0
+      },
+      "108_unmasked_foreground": {
+        "identical_rgba_pixels": true,
+        "different_pixels": 0
+      }
+    },
+    "monochrome": {
+      "512": {
+        "identical_rgba_pixels": true,
+        "different_pixels": 0,
+        "max_channel_difference": 0
+      },
+      "96": {
+        "identical_rgba_pixels": true,
+        "different_pixels": 0,
+        "max_channel_difference": 0
+      },
+      "48": {
+        "identical_rgba_pixels": true,
+        "different_pixels": 0,
+        "max_channel_difference": 0
+      },
+      "108_unmasked_foreground": {
+        "identical_rgba_pixels": true,
+        "different_pixels": 0
+      }
+    }
+  },
+  "visual_review_48px": "Visually inspected the native 48px green PNG and contact sheet: broad rectangular cloth, S-shaped parallel edges, straight trailing edge and 4px pole remain legible; no tent/triangle silhouette. Human-perception judgment, not an automated classifier.",
+  "files_sha256": {
+    "README.md": "403238dbcc84e15763e91efe15d0eaa260a7fc5ff78146d50f02a9028ee6e497",
+    "android-foreground-108.png": "235e8dedaa62deeacd727382050a311c9f20c53fea4cec4bad97de1f7ab694c2",
+    "android-foreground-from-xml.svg": "cf736cdc56ad035e129e43367ccc3f3ac111bddeab785fb03a6d6cdfa90fa8a8",
+    "android-foreground-safe-zone-2160.png": "828a8841870c6e3c62f8945fad5e1a077dfd0e8dee91348f7ad371cf8cde038a",
+    "android-foreground-tile-48.png": "a209b0a2ccb72c6a5122524ebc3c856e1bf14c471113ba87cd03c5a1d02acca9",
+    "android-foreground-tile-512.png": "2801d59d50c7cc4519b4481c5fc2aa25ac260000041ff6ebe55dbc7ad7f7b532",
+    "android-foreground-tile-96.png": "6babb143013d8cc6bcddeeefba13b58c2193f8a7a18a3f22a4e184a5cc88e9af",
+    "android-foreground-tile-from-xml.svg": "2b573a34e0cc1056092ea0f526393e70c5ea156a04a3089cdb117da13644f912",
+    "android-monochrome-108.png": "235e8dedaa62deeacd727382050a311c9f20c53fea4cec4bad97de1f7ab694c2",
+    "android-monochrome-from-xml.svg": "cf736cdc56ad035e129e43367ccc3f3ac111bddeab785fb03a6d6cdfa90fa8a8",
+    "android-monochrome-tile-48.png": "a209b0a2ccb72c6a5122524ebc3c856e1bf14c471113ba87cd03c5a1d02acca9",
+    "android-monochrome-tile-512.png": "2801d59d50c7cc4519b4481c5fc2aa25ac260000041ff6ebe55dbc7ad7f7b532",
+    "android-monochrome-tile-96.png": "6babb143013d8cc6bcddeeefba13b58c2193f8a7a18a3f22a4e184a5cc88e9af",
+    "android-monochrome-tile-from-xml.svg": "2b573a34e0cc1056092ea0f526393e70c5ea156a04a3089cdb117da13644f912",
+    "build.py": "e0a8ab5bd446b78f2ac5711f7ede8f6aefe95487a72886629d77f9219a2d46ff",
+    "gilbeot-foreground-108.png": "235e8dedaa62deeacd727382050a311c9f20c53fea4cec4bad97de1f7ab694c2",
+    "gilbeot-foreground.svg": "cf736cdc56ad035e129e43367ccc3f3ac111bddeab785fb03a6d6cdfa90fa8a8",
+    "gilbeot-icon-gray-48.png": "6eedc3f28c634c1f40f96a8b3c395be7f3274e094bb76507ef19996f31f1a068",
+    "gilbeot-icon-gray-512.png": "8c23d6677673df037cf21a91bdf384d74d4b5ea16ba9f2600a058a1fd424d5ed",
+    "gilbeot-icon-gray-96.png": "c9c134d34669038cbc430c991a0aaf02de83bbc068eb0a51990b895282b32ce1",
+    "gilbeot-icon-gray.svg": "911f8744a34a67fd7ed77d7a08eeef4941596fa3b4b5613c2917e5de42ec8d52",
+    "gilbeot-icon-green-48.png": "a209b0a2ccb72c6a5122524ebc3c856e1bf14c471113ba87cd03c5a1d02acca9",
+    "gilbeot-icon-green-512.png": "2801d59d50c7cc4519b4481c5fc2aa25ac260000041ff6ebe55dbc7ad7f7b532",
+    "gilbeot-icon-green-96.png": "6babb143013d8cc6bcddeeefba13b58c2193f8a7a18a3f22a4e184a5cc88e9af",
+    "gilbeot-icon-green.svg": "2b573a34e0cc1056092ea0f526393e70c5ea156a04a3089cdb117da13644f912",
+    "ic_launcher_background.xml": "f4f8fbc6b4f1deac8999e36bc3260709957cb747d2ed1d2476fc1a5596f7ad94",
+    "ic_launcher_foreground.xml": "06fda09c35d74b2982ef42935426c7ed77c336cc03f2e37026a2635cd41fa651",
+    "ic_launcher_monochrome.xml": "06fda09c35d74b2982ef42935426c7ed77c336cc03f2e37026a2635cd41fa651",
+    "icon.svg": "2b573a34e0cc1056092ea0f526393e70c5ea156a04a3089cdb117da13644f912",
+    "inspection.png": "b8efdf05a22a9fef3c492314d66e514b1eac32f24d533e72e1149d047eda11e8",
+    "preview.html": "9e58ecae484c5c3c1d38b395db80ba9216fa9f467e73fe6e7371edf865be62ab"
+  }
+}
